@@ -1,25 +1,16 @@
-const exclude = ['constructor', 'mount']
-import addHooks from "./addHooks"
-import log from "./log"
-const m = [addHooks, log]
+import { extendPrototype } from "../util/extend"
 
+const exclude = ['constructor']
 
-export default function useMiddleWare (proxyClass, { el, ctx, isMounted,promise}) {
-  const ret = {
-      el,
-      ctx,
-      isMounted,
-      promise
-  }
-
-  ret.__proto__  = Reflect.getPrototypeOf(this)
-
+export default function useMiddleWare (options, m) {
+  const ret = options
+  extendPrototype(ret, this)
   function proxy( obj, fn = (x=>x)) {
     const prototype = Reflect.getPrototypeOf(obj)
     const attrs = Reflect.ownKeys(prototype)
     const middlewares = m.map(v=> v(ret))
     attrs.forEach(attr => {
-        if (exclude.includes(attr) || (typeof Reflect.get(obj, attr) !== 'function')) {
+        if (exclude.includes(attr) || (typeof Reflect.get(obj, attr) !== 'function') || attr.startsWith('_')) {
            return
         }
         const originvalue = Reflect.get(obj, attr).bind(ret)
@@ -34,9 +25,6 @@ export default function useMiddleWare (proxyClass, { el, ctx, isMounted,promise}
     })
   }
 
-  for(const c of proxyClass) {
-    proxy( new c.Ctor(ctx, ret), (attr)=> attr + c.key)
-  }
   proxy(ret)
   
   return ret

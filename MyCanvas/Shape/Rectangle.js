@@ -1,20 +1,20 @@
 
 import Shape from "./index";
 export default class Rectangle extends Shape {
-   draw(x, y, width, height, options ={}) {
-       const { ctx } = this
-       const { isStorke } = options 
+  constructor(options ={}) {
+    super({
+      type:'Rectangle',
+      ...options
+    })
+  }
+
+   draw (ctx) {
+       const { width, height, x,  y, isStorke } = this
        if (isStorke) {
             ctx.strokeRect(x, y, width, height);
-       }else {
+       }else { 
            ctx.fillRect(x, y, width, height);
        }
-
-   }
-
-   clear(x, y, width, height, options={}) {
-    const { ctx } = this
-    ctx.clearRect(x, y, width, height);
    }
 
 }

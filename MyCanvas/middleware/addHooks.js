@@ -1,4 +1,4 @@
-
+import Options from "../Options"
 export default function(ret) {
   return function (next) {
       return async function(){
@@ -6,15 +6,15 @@ export default function(ret) {
            throw new Error('未挂载')
          }
          const args = [].slice.call(arguments)
-         const t = args[args.length-1]
-         if (t && t instanceof Object) {
+         const t =  args[args.length-1] 
+         if (t && t instanceof Options) {
              const {before, after} = t 
              if (typeof before === 'function') {
-                 before(obj)
+                 before(ret)
              }
             await next(...args)
              if (typeof after === 'function') {
-                after(obj)
+                after(ret)
              }
          } else {
             await next(...args)
