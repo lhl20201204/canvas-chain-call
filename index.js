@@ -35,9 +35,15 @@ const ellipse = new Ellipse({
     anticlockwise:false
 })
 
-const _ = new MyCanvas()
-    ._mount(document.body)
-    .add(rectangle2)
+const canvas = document.createElement('canvas')
+canvas.style.width ='100vw'
+canvas.style.height = '100vh'
+document.body.appendChild(canvas)
+
+const _ = new MyCanvas({
+  el: canvas
+})
+.add(rectangle2)
     .wait(1000)
     .add(rectangle, new Options({
         before() {
@@ -92,8 +98,50 @@ const _ = new MyCanvas()
       target: ellipse,
       rotate: Math.PI,
       fillStyle: '#00ff00',
-      time: 3000
+      time: 1000
     })
     
+function rand(x) {
+  return Math.floor(Math.random() * x)
+}
+const len = 100
+let x = []
+
+for(let i=0;i<len;i++) {
+  x.push(i)
+}
+ const balls = x.map(v => {
+  const r = 2+ rand(4)
+  return new Ellipse({
+    originX: 0.5,
+    originY: 0.5,
+    x:70 + rand(100),
+    y:30 + rand(100),
+    fillStyle: 'rgb('+rand(255)+','+rand(255)+','+rand(255)+')',
+    radiusX:r,
+    radiusY:r,
+    rotation: 0,
+    startAngle: 0,
+    endAngle:  2*Math.PI,
+    anticlockwise:false
+})
+
+ })
+
+  const canvas2 = new MyCanvas({
+    el:canvas,
+    promise: _.promise
+  })
+  .add(balls)
+  .move(balls.map(v => {
+    return {
+      target: v,
+      ...v,
+      x: rand(300),
+      y: rand(100),
+      time: 5000+rand(10000)
+    }
+  }))
+
 
     

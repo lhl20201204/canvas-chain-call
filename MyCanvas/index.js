@@ -1,47 +1,24 @@
 import useMiddleWare from "./middleware/useMiddleWare"
-import genInstance from './util'
 import addHooks from "./middleware/addHooks"
 import log from "./middleware/log"
 import { colorHex } from "./util/color"
 const m = [addHooks, log]
 export default class MyCanvas {
   constructor (options = {}) {
-    const { isMounted } = options
-
     options = {
-      el: isMounted || document.createElement('canvas'),
-      width: '100vw',
-      height:'100vh',
-      isMounted : false,
-      promise : isMounted || Promise.resolve('init instance'),
-      children : isMounted || [],
+      promise : Promise.resolve('init instance'),
+      children : [],
       ...options
     }
-
     const { 
        el,
-       ctx, 
-       width,
-       height ,
+       ctx
       } = options 
 
-   if (!isMounted) {
-     el.style.width = width 
-     el.style.height = height
-    }
     options.ctx = ctx || el.getContext('2d')
     return useMiddleWare.call(this, options, m)
   }
   
-  _mount(parent) {
-    if (!this.el) {
-       throw new Error('没有实例对象') 
-    }
-    this.isMounted = true
-    parent.appendChild(this.el)
-    return genInstance(this)()
-  }
-
   async wait(delay) {
    await new Promise(resolve => {
        setTimeout(() => {
@@ -225,6 +202,7 @@ async function add(child) {
     return await Promise.all(child.map(v => add.call(this, v)))
   } 
   const { children, ctx } = this
+  child.isDestroyed = false
   children.push(child)
   child.draw(ctx)
 }
