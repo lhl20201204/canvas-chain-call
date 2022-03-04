@@ -41,7 +41,10 @@ canvas.style.height = '100vh'
 document.body.appendChild(canvas)
 
 const _ = new MyCanvas({
-  el: canvas
+  el: canvas,
+  reverse: true,
+  loop: 2,
+  infinity: true
 })
 .add(rectangle2)
     .wait(1000)
@@ -71,6 +74,7 @@ const _ = new MyCanvas({
       {
         target: rectangle2,
         scaleX: 0.5,
+        fillStyle: '#00f0f0', 
         scaleY: 0.5
       }
     ]) 
@@ -88,6 +92,7 @@ const _ = new MyCanvas({
     .wait(1000) 
     .move({
         target: rectangle,
+        fillStyle: '#f00f30',  
         x: 0,
         y: 0
     })
@@ -127,21 +132,16 @@ for(let i=0;i<len;i++) {
 })
 
  })
-
-  const canvas2 = new MyCanvas({
-    el:canvas,
-    promise: _.promise
-  })
-  .add(balls)
+  
+  _.add(balls)
   .move(balls.map(v => {
     return {
       target: v,
       ...v,
       x: rand(300),
       y: rand(100),
-      time: 5000+rand(10000)
+      time: 1000+rand(1000)
     }
   }))
-
 
     

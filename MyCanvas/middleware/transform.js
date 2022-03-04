@@ -1,23 +1,20 @@
 // import Options from "../Options"
 export default function(_this) {
-  function get (a,b) {
-    return Reflect.has(_this, a) ? Reflect.get(_this, a): Reflect.get(_this, b)
-  }
   return function (next) {
       return async function f(){
           const args = [...arguments]
           if (['draw'].includes(f.fnName) && (args[0] instanceof CanvasRenderingContext2D) ) {
              const ctx = args[0]
-             const { width, height, x,  y} = _this
-             const centerX =(x + (width || 0) * get('originX' , 'defaultOriginX' ))
-             const centerY =(y + (height || 0) * get('originY' , 'defaultOriginY'))
+             const { width, height, x,strokeStyle, fillStyle, y, originX, originY, rotate, scaleX, scaleY} = _this
+             const centerX =(x + (width || 0) * originX)
+             const centerY =(y + (height || 0) * originY)
              ctx.save();
              ctx.translate(centerX, centerY);
-             ctx.rotate( get('rotate', 'defaultRotate'));
-             ctx.scale( get('scaleX', 'defaultScaleX'), get('scaleY', 'defaultScaleY'))
+             ctx.rotate( rotate);
+             ctx.scale( scaleX, scaleY)
              ctx.translate(-centerX, -centerY);
-             ctx.strokeStyle = get('strokeStyle', 'defaultColor')
-             ctx.fillStyle = get('fillStyle', 'defaultColor')
+             ctx.strokeStyle = strokeStyle
+             ctx.fillStyle = fillStyle
              next(...args)
              ctx.restore()
           } else {

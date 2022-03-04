@@ -2,10 +2,14 @@ import useMiddleWare from "./middleware/useMiddleWare"
 import addHooks from "./middleware/addHooks"
 import log from "./middleware/log"
 import { colorHex } from "./util/color"
+
 const m = [addHooks, log]
 export default class MyCanvas {
   constructor (options = {}) {
     options = {
+      usedElements: [],
+      isReversing: false,
+      history: [],
       promise : Promise.resolve('init instance'),
       children : [],
       ...options
@@ -120,7 +124,7 @@ function run(target, diffs , time, concurrent = false) {
        }
       }  
       !concurrent && _this._render()
-      if (elapsed < time) { // 在两秒后停止动画
+      if (elapsed < time) { // 在time后停止动画
         window.requestAnimationFrame(step);
       }else {
         for (const key of keys) {
@@ -129,8 +133,13 @@ function run(target, diffs , time, concurrent = false) {
           } else {
             target[key] = init[key] + values[key]
          }
-        }  
-        !concurrent && _this._render()
+        }
+         _this._render()
+        //  if (_this.isReversing) {
+        //   console.log('false', {...target})
+        // } else {
+        //   console.log('true', {...target})
+        // }
         resolve()
       }
      }
@@ -160,19 +169,50 @@ async function MySetInterval(fn, p) {
 
 }
 
+function _hasAddInCtx(child, children) {
+   if(!children) {
+     children = this.children
+   }
+   return children.some(v => Array.isArray(v)? _hasAddInCtx(child,v): v.id === child.id)
+}
 
-async function move(options, concurrent) {
+
+async function move(options) {
    if (!options) {
      throw new Error('没有参数')
+   } 
+   if (typeof options === 'function') {
+     const fn = options
+     options = fn(...[...arguments].slice(1))
    }
    if (Array.isArray(options)) {
-     return MySetInterval(render.bind(this) ,Promise.all(options.map(v => move.call(this, v ,true))))
+     return MySetInterval(render.bind(this) ,Promise.all(options.map(v => move.call(this, {
+       ...v,
+       concurrent: true
+     }))))
    }
-   const { target, time = 1000, ...rest } = options
+   const { target, time = 1000, initStatus, endStatus, concurrent =false,  ...rest } = options
    if (!target) {
      throw new Error('没有操作对象')
    }
-   const diffs = diff(target, rest)
+   if (!this._hasAddInCtx(target)) {
+      this._add(target)
+   }
+   // 如果逻辑相反
+   let start = target
+   let end = rest
+   if (this.isReversing) {
+     console.log(initStatus)
+     start = endStatus
+     target.reset(endStatus)
+     end = initStatus
+   }
+   const diffs = diff(start, end) 
+  //  if (this.isReversing) {
+  //    console.log('false',diffs.values, {...target})
+  //  } else {
+  //    console.log('true', diffs.values, {...target})
+  //  }
    return this._run( target, diffs, time, concurrent) 
 }
 
@@ -180,7 +220,7 @@ async function draw(parent, ctx) {
    let index = 0 
    while (index < parent.length) {
      const instance = parent[index]
-     if (instance.isDestroyed) {
+     if (instance.isDestroyed.value) {
        parent.splice(index, 1)
      } else {
        instance.draw(ctx)
@@ -193,20 +233,65 @@ async function remove(child) {
   if (Array.isArray(child)) {
     return await Promise.all(child.map(v => remove.call(this, v)))
   }
-  child.remove()
-  this._render()
+  if (this._hasAddInCtx(child)) {
+    child.remove()
+     this._render()
+  }
 }
 
 async function add(child) {
+  if (typeof child === 'function') {
+    const fn = child
+    child = fn(...[...arguments].slice(1))
+  }
   if (Array.isArray(child)) {
     return await Promise.all(child.map(v => add.call(this, v)))
   } 
-  const { children, ctx } = this
-  child.isDestroyed = false
-  children.push(child)
-  child.draw(ctx)
+  const { children, ctx, usedElements } = this
+  child.isDestroyed.value = false
+  if (!this._hasAddInCtx(child)) {
+    usedElements.push(child)
+    children.push(child)
+    child.draw(ctx)
+  }
 }
 
+async function _reStart() {
+     this.children.splice(0, this.children.length)
+     
+     let FNchain = await Promise.all(this.history)
+     this.promise =  Promise.resolve('init instance')
+     this.history.splice(0, this.history.length)
+     if (this.reverse) {
+       this.isReversing = !this.isReversing
+       FNchain = FNchain.reverse()
+     }   
+     this.usedElements.forEach(e => {
+       if (!this.isReversing) {
+            e.reset( e.initStatus)
+       }
+      })
+     this.usedElements.splice(0, this.usedElements.length)
+     FNchain.reduce((p, {fnName, arguments: args}) => {
+       return p[fnName](...args)
+     }  ,this)
+     
+     this._render()
+}
+
+async function _end() {
+  if (this.infinity) {
+    this._reStart()
+  } else if(this.loop > 1) {
+     this.loop --
+     this._reStart()
+     console.log(this.loop + '___________________')
+   } 
+}
+
+MyCanvas.prototype._end = _end
+MyCanvas.prototype._reStart = _reStart
+MyCanvas.prototype._hasAddInCtx = _hasAddInCtx
 MyCanvas.prototype._run = run
 MyCanvas.prototype._draw = draw
 MyCanvas.prototype._render = render
@@ -214,3 +299,4 @@ MyCanvas.prototype.draw = draw
 MyCanvas.prototype.move = move
 MyCanvas.prototype.remove = remove
 MyCanvas.prototype.add = add
+MyCanvas.prototype._add = add

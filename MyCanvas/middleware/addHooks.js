@@ -1,19 +1,26 @@
 import Options from "../Options"
 export default function(ret) {
   return function (next) {
-      return async function(){
+      return async function f(){
          const args = [].slice.call(arguments)
          const t =  args[args.length-1] 
          if (t && t instanceof Options) {
-             const {before, after} = t 
-             if (typeof before === 'function') {
-                 before(ret)
-             }
+             if (typeof t.before === 'function') {
+                 t.before = [t.before]
+                
+             } 
+            Array.isArray(t.before)&&t.before.forEach(fn => {
+              fn(ret, f.fnName)
+             });
+             
             await next(...args)
-             if (typeof after === 'function') {
-                after(ret)
+             if (typeof t.after === 'function') {
+                t.after = [t.after]
              }
-         } else {
+             Array.isArray(t.after)&&t.after.forEach(fn => {
+              fn(ret, f.fnName)
+             });
+         } else {   
             await next(...args)
          }
 

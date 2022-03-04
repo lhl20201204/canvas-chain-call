@@ -1,6 +1,6 @@
 import { extendPrototype } from "../util/extend"
 
-const exclude = ['constructor']
+const excludeAttr = ['constructor']
 
 export default function useMiddleWare (options, m) {
   const ret = options
@@ -10,13 +10,18 @@ export default function useMiddleWare (options, m) {
     const attrs = Reflect.ownKeys(prototype)
     const middlewares = m.map(v=> v(ret))
     attrs.forEach(attr => {
-        if (exclude.includes(attr) || (typeof Reflect.get(obj, attr) !== 'function') || attr.startsWith('_')) {
+        if (excludeAttr.includes(attr) || (typeof Reflect.get(obj, attr) !== 'function') || attr.startsWith('_')) {
            return
-        }
-        const originvalue = Reflect.get(obj, attr).bind(ret)
-        const newvalue = middlewares.reduce( (p,v) => v(p) , originvalue)
+        } 
         const name = fn(attr)
-        newvalue.fnName = name
+        const originvalue = Reflect.get(obj, attr).bind(ret)
+        const newvalue = middlewares.reduce( (p,v) =>{
+          const f = v(p)
+          f.fnName = name
+          return f
+        }
+        , originvalue)
+
         Object.defineProperty(ret, name, {
             get() {
               return newvalue
