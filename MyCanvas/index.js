@@ -15,7 +15,10 @@ export default class MyCanvas {
       usedElements: [],
       isReversing: false,
       history: [],
-      promise: Promise.resolve('init instance'),
+      promise: new Promise((resolve) => {
+        this._start = resolve
+        options.auto && resolve()
+      }),
       children: [],
       ...options
     }
@@ -46,33 +49,61 @@ async function call (fn) {
   }
 }
 
-function diff (target, newAttrs) {
+function diff (options) {
+  if (Array.isArray(options)) {
+    const ret = []
+    ret.time = 0
+    options.forEach(e => {
+      const childDiff = diff.call(this, e)
+      ret.time = Math.max(ret.time, childDiff.time)
+      ret.push(childDiff)
+    })
+    return ret
+  }
+
+  const { target, time = 1000, initStatus, endStatus, concurrent = false, ...rest } = options
+  if (!target) {
+    throw new Error('没有操作对象')
+  }
+  if (!this._hadExisted(target)) {
+    this._add(target)
+  }
+  // 如果逻辑相反
+  let start = target
+  let end = rest
+  if (this.isReversing) {
+    start = endStatus
+    target.reset(endStatus)
+    end = initStatus
+  }
+
   const diffs = {
+    time,
     keys: [],
     values: {}
   }
-  for (const attr in newAttrs) {
-    if (!Reflect.has(target, attr)) {
-      target[attr] = 0
+  for (const attr in end) {
+    if (!Reflect.has(start, attr)) {
+      start[attr] = 0
     }
     let diff
     if (style.includes(attr)) {
-      diff = toInt(newAttrs[attr]) - toInt(target[attr])
-      target[attr] = colorHex(target[attr])
+      diff = toInt(end[attr]) - toInt(start[attr])
+      start[attr] = colorHex(start[attr])
     } else {
-      diff = newAttrs[attr] - target[attr]
+      diff = end[attr] - start[attr]
     }
     if (diff) {
       diffs.keys.push(attr)
       if (style.includes(attr)) {
-        diffs.values[attr] = colorHex(newAttrs[attr])
+        diffs.values[attr] = colorHex(end[attr])
       } else {
         diffs.values[attr] = diff
       }
     }
   }
   diffs.init = {
-    ...target
+    ...start
   }
   return diffs
 }
@@ -85,17 +116,22 @@ function render () {
 }
 
 
-function run (target, diffs, time, concurrent = false) {
+function run (options, diffs) {
+  const { time } = diffs // 所有运动最长的时间
   const _this = this
   let start = null
-  const { init, values, keys } = diffs
+  let elapsed = 0
   return new Promise((resolve, reject) => {
     try {
-      function step (timestamp) {
-        if (!start) {
-          start = timestamp
+
+      function change (current, diffs) {
+        if (Array.isArray(current)) {
+          return current.forEach((c, i) => {
+            change(current[i], diffs[i])
+          })
         }
-        const elapsed = timestamp - start;
+        const { init, values, keys, time } = diffs
+        const { target } = current
         const ratio = Math.min(elapsed / time, 1)
         for (const key of keys) {
           if (style.includes(key)) {
@@ -104,18 +140,18 @@ function run (target, diffs, time, concurrent = false) {
             target[key] = init[key] + ratio * values[key] // 这样写不用考虑正负值
           }
         }
-        !concurrent && _this._render()
+      }
+
+      function step (timestamp) {
+        if (!start) {
+          start = timestamp
+        }
+        elapsed = timestamp - start;
+        change(options, diffs)
+        _this._render()
         if (elapsed < time) { // 在time后停止动画
           window.requestAnimationFrame(step);
         } else {
-          for (const key of keys) {
-            if (style.includes(key)) {
-              target[key] = values[key]
-            } else {
-              target[key] = init[key] + values[key]
-            }
-          }
-          _this._render()
           resolve()
         }
       }
@@ -127,29 +163,11 @@ function run (target, diffs, time, concurrent = false) {
 }
 
 
-async function MySetInterval (fn, p) {
-  return new Promise((resolve) => {
-    let over = false
-    function step () {
-      fn()
-      if (!over) {
-        window.requestAnimationFrame(step);
-      }
-    }
-    window.requestAnimationFrame(step);
-    p.then(() => {
-      over = true
-      resolve()
-    })
-  })
-
-}
-
-function _hasAddInCtx (child, children) {
+function _hadExisted (child, children) {
   if (!children) {
     children = this.children
   }
-  return children.some(v => Array.isArray(v) ? _hasAddInCtx(child, v) : v.id === child.id)
+  return children.some(v => Array.isArray(v) ? _hadExisted(child, v) : v.id === child.id)
 }
 
 
@@ -161,29 +179,8 @@ async function move (options) {
     const fn = options
     options = fn(...[...arguments].slice(1))
   }
-  if (Array.isArray(options)) {
-    return MySetInterval(render.bind(this), Promise.all(options.map(v => move.call(this, {
-      ...v,
-      concurrent: true
-    }))))
-  }
-  const { target, time = 1000, initStatus, endStatus, concurrent = false, ...rest } = options
-  if (!target) {
-    throw new Error('没有操作对象')
-  }
-  if (!this._hasAddInCtx(target)) {
-    this._add(target)
-  }
-  // 如果逻辑相反
-  let start = target
-  let end = rest
-  if (this.isReversing) {
-    start = endStatus
-    target.reset(endStatus)
-    end = initStatus
-  }
-  const diffs = diff(start, end)
-  return this._run(target, diffs, time, concurrent)
+  const diffs = diff.call(this, options)
+  return this._run(options, diffs)
 }
 
 async function draw (parent, ctx) {
@@ -207,7 +204,7 @@ async function remove (child) {
   if (Array.isArray(child)) {
     return await Promise.all(child.map(v => remove.call(this, v)))
   }
-  if (this._hasAddInCtx(child)) {
+  if (this._hadExisted(child)) {
     child.remove()
     this._render()
   }
@@ -219,11 +216,11 @@ async function add (child) {
     child = fn(...[...arguments].slice(1))
   }
   if (Array.isArray(child)) {
-    return await Promise.all(child.map(v => add.call(this, v)))
+    return await Promise.all(child.map(v => this._add(v)))
   }
   const { children, ctx, usedElements } = this
   child.isDestroyed.value = false
-  if (!this._hasAddInCtx(child)) {
+  if (!this._hadExisted(child)) {
     usedElements.push(child)
     children.push(child)
     child.draw(ctx)
@@ -271,7 +268,7 @@ async function _end () {
 
 MyCanvas.prototype._end = _end
 MyCanvas.prototype._reStart = _reStart
-MyCanvas.prototype._hasAddInCtx = _hasAddInCtx
+MyCanvas.prototype._hadExisted = _hadExisted
 MyCanvas.prototype._run = run
 MyCanvas.prototype._draw = draw
 MyCanvas.prototype._render = render
