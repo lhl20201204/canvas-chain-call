@@ -46,7 +46,7 @@ const canvas = document.getElementById('canvas')
 function rand (x) {
   return Math.floor(Math.random() * x)
 }
-const len = 200
+const len = 1000
 let x = []
 
 for (let i = 0; i < len; i++) {
@@ -64,7 +64,7 @@ const balls = x.map(v => {
     radiusY: r,
     rotation: 0,
     startAngle: 0,
-    endAngle:  Math.PI,
+    endAngle:  2*Math.PI,
     anticlockwise: false
   })
 
@@ -76,7 +76,7 @@ const controller =  new Controller({
 const _ = new Child({
   controller,
   reverse: true,
-  auto: true,
+  // auto: true,
   infinity: true
 }).add(rectangle2)
   .wait(1000)
@@ -175,7 +175,9 @@ const rectangle4 = new Rectangle({
 const _2 = new Child({
   controller,
   auto: true,
-  loop:3
+  // loop:3
+  reverse:true,
+  infinity: true
 })
    .add(rectangle4)
   .add(rectangle3, new Options({
@@ -202,7 +204,7 @@ const _2 = new Child({
     scaleX: 1,
     fillStyle: '#00f0f0',
     scaleY: 0.5,
-    time: 2000
+    time: 1000
   }
   ])
   .move({
@@ -211,7 +213,7 @@ const _2 = new Child({
     y: 50,
     scaleX: 0.5,
     fillStyle: '#f0ff0f',
-    time: 2000
+    time: 1000
   })
   .move({
     target: rectangle3,

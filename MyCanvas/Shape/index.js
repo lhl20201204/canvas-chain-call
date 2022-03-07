@@ -2,7 +2,9 @@ let index = 0
 import transform from "../middleware/transform";
 import useMiddleWare from "../middleware/useMiddleWare";
 import { extendOptions } from '../util/extend'
+import { flattern } from '../util'
 const m = [transform]
+
 export default class Shape {
   constructor(options) {
     this.scaleX = 1
@@ -20,13 +22,6 @@ export default class Shape {
       enumerable: false
     })
 
-    Object.defineProperty(this, "isDestroyed", {
-      value: {
-        value: false
-      },
-      enumerable: false
-    })
-
     Object.defineProperty(this, "type", {
       value: options.type,
       enumerable: false
@@ -37,9 +32,13 @@ export default class Shape {
       enumerable: false
     })
 
-  }
-  remove () {
-    this.isDestroyed.value = true
+    Object.defineProperty(this, "parent", {
+      value: {
+        value: null
+      },
+      enumerable: false
+    })
+
   }
 
   reset (oldStaus) {
@@ -52,3 +51,22 @@ export default class Shape {
     }
   }
 }
+
+function remove (parent = this.parent.value.children) {
+    const len = parent.length
+    for(let i =0;i<len;i ++) {
+      if(!parent[i]) {
+        break;
+      }
+      if (Array.isArray(parent[i]) && remove.call(this, parent[i] )) {
+        return true
+      }
+      if (parent[i].id === this.id) {
+        parent.splice(i ,1)
+        return true
+      }
+    }
+    return false
+}
+
+Shape.prototype.remove = remove

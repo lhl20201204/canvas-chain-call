@@ -11,7 +11,7 @@ function addInitStatus (children) {
     children.endStatus = { ...children.target, ...rest }
   }
 }
-export default function genInstance (ret, fnName, next) {
+export default function createGenInstanceFn (ret, fnName, next) {
   return function () {
     const lastPromise = ret.promise // 链式调用核心
     const newPromise = new Promise((resolve) => {
@@ -53,4 +53,16 @@ export default function genInstance (ret, fnName, next) {
     })
     return ret
   }
+}
+
+
+export function flattern (array) {
+  return array.reduce((p,v) => {
+   if (Array.isArray(v)) {
+     p.push(...flattern(v))
+   }else {
+     p.push(v)
+   }
+   return p
+  }, [])
 }

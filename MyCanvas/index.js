@@ -4,8 +4,10 @@ import renderView from "./middleware/renderView"
 import log from "./middleware/log"
 import { colorHex, colourBlend, toInt } from "./util/color"
 import { extendOptions } from './util/extend'
-
+import { flattern } from './util'
+const defaultTime = 1000
 const style = ['fillStyle', 'strokeStyle']
+const maxSize = 30
 const needReverseFn = ['add', 'remove']
 const reverseFnStore = {
   'add': 'remove',
@@ -35,7 +37,7 @@ export default class MyCanvas {
     options.ctx = controller.ctx
     extendOptions(this, options)
     useMiddleWare(this, m)
-    controller.children.push(this)
+    controller.animations.push(this)
   }
 }
 
@@ -55,17 +57,15 @@ async function call (fn) {
 
 function diff (options) {
   if (Array.isArray(options)) {
-    const ret = []
-    ret.time = 0
+    options.time = 0
     options.forEach(e => {
-      const childDiff = diff.call(this, e)
-      ret.time = Math.max(ret.time, childDiff.time)
-      ret.push(childDiff)
+      diff.call(this, e) 
+      options.time = Math.max(options.time, e.diffs.time)
     })
-    return ret
+    return 
   }
 
-  const { target, time = 1000, initStatus, endStatus, concurrent = false, ...rest } = options
+  const { target, time = defaultTime, initStatus, endStatus, ...rest } = options
   if (!target) {
     throw new Error('没有操作对象')
   }
@@ -109,26 +109,36 @@ function diff (options) {
   diffs.init = {
     ...start
   }
-  return diffs
+  options.diffs = diffs
 }
 
 
-function run (options, diffs) {
-  const { time } = diffs // 所有运动最长的时间
+function run (options ) {
   let start = null
-  let elapsed = 0
-  return new Promise((resolve, reject) => {
+  const caches = flattern([options])
+  caches.forEach(c => c.endRender = false)
+  const chunk = []
+  while(caches.length > 0) {
+    chunk.push(caches.splice(0,maxSize))
+  }
+  return Promise.all(chunk.map(cache =>  new Promise((resolve, reject) => {
     try {
-
-      function change (current, diffs) {
-        if (Array.isArray(current)) {
-          return current.forEach((c, i) => {
-            change(current[i], diffs[i])
-          })
+      const time = Math.max(...cache.map(v => v.time || defaultTime))
+      function step (timestamp) {
+        if (!start) {
+          start = timestamp
         }
+        const elapsed = timestamp - start;
+        for (const currentOptions of cache) {
+          if (currentOptions.endRender) {
+            continue
+          }
+        const { diffs, target } = currentOptions
         const { init, values, keys, time } = diffs
-        const { target } = current
         const ratio = Math.min(elapsed / time, 1)
+        if (ratio === 1) {
+          currentOptions.endRender = true
+        }
         for (const key of keys) {
           if (style.includes(key)) {
             target[key] = colourBlend(init[key], values[key], ratio)
@@ -136,14 +146,7 @@ function run (options, diffs) {
             target[key] = init[key] + ratio * values[key] // 这样写不用考虑正负值
           }
         }
-      }
-
-      function step (timestamp) {
-        if (!start) {
-          start = timestamp
         }
-        elapsed = timestamp - start;
-        change(options, diffs)
 
         if (elapsed < time) { // 在time后停止动画
           window.requestAnimationFrame(step);
@@ -155,7 +158,8 @@ function run (options, diffs) {
     } catch (e) {
       reject(e)
     }
-  })
+  })))
+  
 }
 
 
@@ -175,20 +179,15 @@ async function move (options) {
     const fn = options
     options = fn(...[...arguments].slice(1))
   }
-  const diffs = diff.call(this, options)
-  return this._run(options, diffs)
+  diff.call(this, options)
+  return this._run(options)
 }
 
 async function draw (parent, ctx) {
   let index = 0
-  while (index < parent.length) {
-    const instance = parent[index]
-    if (instance.isDestroyed.value) {
-      parent.splice(index, 1)
-    } else {
-      instance.draw(ctx)
-      index++
-    }
+  const len = parent.length
+  while (index <len) {
+    parent[index++].draw(ctx)
   }
 }
 
@@ -214,10 +213,10 @@ async function add (child) {
     return await Promise.all(child.map(v => this._add(v)))
   }
   const { children, ctx, usedElements } = this
-  child.isDestroyed.value = false
   if (!this._hadExisted(child)) {
     usedElements.push(child)
     children.push(child)
+    child.parent.value = this
     child.draw(ctx)
   }
 }

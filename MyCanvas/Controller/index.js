@@ -6,7 +6,7 @@ export default class Controller  {
     }
     options = {
       ctx: options.el.getContext('2d'),
-      children: [],
+      animations: [],
       isRefreshing: false,
       duty: [],
       ...options
@@ -15,7 +15,7 @@ export default class Controller  {
   }
 
   render () {
-   const { children: animations, el, ctx } = this
+   const { animations, el, ctx } = this
    ctx.clearRect(0, 0, el.width, el.height);
     for(const a of animations) {
      const { children } = a
@@ -24,10 +24,11 @@ export default class Controller  {
   }
 
   refresh() {
-    const { duty } = this
     if (this.isRefreshing) {
       return
     }
+    const { duty } = this
+   
     this.isRefreshing = true
     Promise.all(duty).then( () => {
         this.isRefreshing = false

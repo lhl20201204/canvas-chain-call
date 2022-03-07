@@ -1,5 +1,5 @@
 const logger = false
-import genInstance from "../util"
+import createGenInstanceFn from "../util"
 
 export default function (ret) {
   return function (next) {
@@ -7,7 +7,7 @@ export default function (ret) {
       if (logger) {
         console.log('代理' + f.fnName + '函数')
       }
-      return genInstance(ret, f.fnName, next)(...arguments)
+      return createGenInstanceFn(ret, f.fnName, next)(...arguments) // 方便获取参数
     }
   }
 }
