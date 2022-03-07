@@ -1,5 +1,5 @@
 const logger = false
-import createGenInstanceFn from "../util"
+import createGenInstanceFn from "../createGenInstanceFn"
 
 export default function (ret) {
   return function (next) {

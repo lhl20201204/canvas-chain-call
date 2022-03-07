@@ -78,13 +78,12 @@ const _ = new Child({
   reverse: true,
   // auto: true,
   infinity: true
-}).add(rectangle2)
+}).call(() => {
+  console.log('重新开始刷新')
+})
+.add(rectangle2)
   .wait(1000)
-  .add(rectangle, new Options({
-    before () {
-      console.log('添加前的钩子')
-    }
-  }))
+  .add(rectangle)
   .wait(1000)
   .move({
     target: rectangle,
@@ -92,9 +91,6 @@ const _ = new Child({
     y: 50,
     scaleX: 2,
     time: 2000
-  })
-  .call(() => {
-    console.log(new Date())
   })
   .move([{
     target: rectangle,
@@ -110,9 +106,6 @@ const _ = new Child({
     scaleY: 0.5
   }
   ])
-  .call(() => {
-    console.log(new Date())
-  })
   .move({
     target: rectangle,
     x: 20,
@@ -175,16 +168,12 @@ const rectangle4 = new Rectangle({
 const _2 = new Child({
   controller,
   auto: true,
-  // loop:3
+  // loop:3,
   reverse:true,
   infinity: true
 })
    .add(rectangle4)
-  .add(rectangle3, new Options({
-    before () {
-      console.log('添加前的钩子')
-    }
-  }))
+  .add(rectangle3)
   .move({
     target: rectangle3,
     x: 80,

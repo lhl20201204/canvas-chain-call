@@ -1,19 +1,19 @@
 import useMiddleWare from "./middleware/useMiddleWare"
 import addHooks from "./middleware/addHooks"
-import renderView from "./middleware/renderView"
+
 import log from "./middleware/log"
 import { colorHex, colourBlend, toInt } from "./util/color"
 import { extendOptions } from './util/extend'
 import { flattern } from './util'
 const defaultTime = 1000
 const style = ['fillStyle', 'strokeStyle']
-const maxSize = 30
+const maxSize = 100 // 一组为多少个刷新，可以设置 Number.MAX_VALUE ,运动的时候不分批刷新
 const needReverseFn = ['add', 'remove']
 const reverseFnStore = {
   'add': 'remove',
   'remove': 'add'
 }
-const m = [addHooks, renderView, log]
+const m = [addHooks, log]
 export default class MyCanvas {
   constructor(options = {}) {
     options = {
@@ -35,6 +35,10 @@ export default class MyCanvas {
     }
     options.el = controller.el
     options.ctx = controller.ctx
+    options.width = options.el.width
+    options.height = options.el.height
+    options.animations = controller.animations
+    options._render = controller.render
     extendOptions(this, options)
     useMiddleWare(this, m)
     controller.animations.push(this)
@@ -60,12 +64,13 @@ function diff (options) {
     options.time = 0
     options.forEach(e => {
       diff.call(this, e) 
-      options.time = Math.max(options.time, e.diffs.time)
+      options.time = Math.max(options.time, e.time)
     })
     return 
   }
 
-  const { target, time = defaultTime, initStatus, endStatus, ...rest } = options
+  options.time = options.time || defaultTime
+  const { target, time, initStatus, endStatus, ...rest } = options
   if (!target) {
     throw new Error('没有操作对象')
   }
@@ -82,7 +87,6 @@ function diff (options) {
   }
 
   const diffs = {
-    time,
     keys: [],
     values: {}
   }
@@ -117,24 +121,26 @@ function run (options ) {
   let start = null
   const caches = flattern([options])
   caches.forEach(c => c.endRender = false)
-  const chunk = []
+  const chunk = [] // 分批
   while(caches.length > 0) {
     chunk.push(caches.splice(0,maxSize))
   }
+  const _this = this
   return Promise.all(chunk.map(cache =>  new Promise((resolve, reject) => {
     try {
-      const time = Math.max(...cache.map(v => v.time || defaultTime))
+      const time = Math.max(...cache.map(v => v.time ))
       function step (timestamp) {
         if (!start) {
           start = timestamp
         }
+        // flag && console.log('刷新')
         const elapsed = timestamp - start;
         for (const currentOptions of cache) {
           if (currentOptions.endRender) {
             continue
           }
-        const { diffs, target } = currentOptions
-        const { init, values, keys, time } = diffs
+        const { diffs, target , time} = currentOptions
+        const { init, values, keys  } = diffs
         const ratio = Math.min(elapsed / time, 1)
         if (ratio === 1) {
           currentOptions.endRender = true
@@ -148,6 +154,7 @@ function run (options ) {
         }
         }
 
+       _this._render()
         if (elapsed < time) { // 在time后停止动画
           window.requestAnimationFrame(step);
         } else {
@@ -202,6 +209,7 @@ async function remove (child) {
   if (this._hadExisted(child)) {
     child.remove()
   }
+  this._render()
 }
 
 async function add (child) {
