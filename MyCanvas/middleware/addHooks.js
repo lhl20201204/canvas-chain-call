@@ -23,8 +23,6 @@ export default function(ret) {
          } else {   
             await next(...args)
          }
-
-        return ret
       }  
   }
 }

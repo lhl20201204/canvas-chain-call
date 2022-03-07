@@ -1,14 +1,17 @@
 import useMiddleWare from "./middleware/useMiddleWare"
 import addHooks from "./middleware/addHooks"
+import renderView from "./middleware/renderView"
 import log from "./middleware/log"
 import { colorHex, colourBlend, toInt } from "./util/color"
+import { extendOptions } from './util/extend'
+
 const style = ['fillStyle', 'strokeStyle']
 const needReverseFn = ['add', 'remove']
 const reverseFnStore = {
   'add': 'remove',
   'remove': 'add'
 }
-const m = [addHooks, log]
+const m = [addHooks, renderView, log]
 export default class MyCanvas {
   constructor(options = {}) {
     options = {
@@ -23,15 +26,16 @@ export default class MyCanvas {
       ...options
     }
     const {
-      el,
-      ctx
+      controller
     } = options
-
-    options.ctx = ctx || el.getContext('2d')
-    for (const attr in options) {
-      this[attr] = options[attr]
+    if (!controller) {
+      throw new Error('没有管理器实例')
     }
+    options.el = controller.el
+    options.ctx = controller.ctx
+    extendOptions(this, options)
     useMiddleWare(this, m)
+    controller.children.push(this)
   }
 }
 
@@ -109,16 +113,8 @@ function diff (options) {
 }
 
 
-function render () {
-  const { children, ctx, el } = this
-  ctx.clearRect(0, 0, el.width, el.height);
-  this._draw(children, ctx)
-}
-
-
 function run (options, diffs) {
   const { time } = diffs // 所有运动最长的时间
-  const _this = this
   let start = null
   let elapsed = 0
   return new Promise((resolve, reject) => {
@@ -148,7 +144,7 @@ function run (options, diffs) {
         }
         elapsed = timestamp - start;
         change(options, diffs)
-        _this._render()
+
         if (elapsed < time) { // 在time后停止动画
           window.requestAnimationFrame(step);
         } else {
@@ -206,7 +202,6 @@ async function remove (child) {
   }
   if (this._hadExisted(child)) {
     child.remove()
-    this._render()
   }
 }
 
@@ -254,7 +249,7 @@ async function _reStart () {
     return p[getReverseFn(this.reverse, fnName)](...args)
   }, this)
 
-  this._render()
+  this.controller.render()
 }
 
 async function _end () {
@@ -271,7 +266,6 @@ MyCanvas.prototype._reStart = _reStart
 MyCanvas.prototype._hadExisted = _hadExisted
 MyCanvas.prototype._run = run
 MyCanvas.prototype._draw = draw
-MyCanvas.prototype._render = render
 MyCanvas.prototype.draw = draw
 MyCanvas.prototype.move = move
 MyCanvas.prototype.remove = remove

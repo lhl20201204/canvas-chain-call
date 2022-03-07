@@ -1,6 +1,7 @@
 let index = 0
 import transform from "../middleware/transform";
 import useMiddleWare from "../middleware/useMiddleWare";
+import { extendOptions } from '../util/extend'
 const m = [transform]
 export default class Shape {
   constructor(options) {
@@ -11,9 +12,7 @@ export default class Shape {
     this.rotate = 0
     this.originX = 0
     this.originY = 0
-    for (const attr in options) {
-      this[attr] = options[attr]
-    }
+    extendOptions(this, options)
     useMiddleWare(this, m)
 
     Object.defineProperty(this, "initStatus", {

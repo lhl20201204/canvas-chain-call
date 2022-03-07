@@ -2,6 +2,9 @@ import MyCanvas from "./MyCanvas";
 import Rectangle from "./MyCanvas/Shape/Rectangle";
 import Options from "./MyCanvas/Options";
 import Ellipse from "./MyCanvas/Shape/Ellipse";
+import Controller from "./MyCanvas/Controller"
+
+
 class Child extends MyCanvas {
 
 }
@@ -43,7 +46,7 @@ const canvas = document.getElementById('canvas')
 function rand (x) {
   return Math.floor(Math.random() * x)
 }
-const len = 500
+const len = 200
 let x = []
 
 for (let i = 0; i < len; i++) {
@@ -66,12 +69,13 @@ const balls = x.map(v => {
   })
 
 })
-
+const controller =  new Controller({
+   el: canvas
+})
 
 const _ = new Child({
-  el: canvas,
+  controller,
   reverse: true,
-  loop: 2,
   auto: true,
   infinity: true
 }).add(rectangle2)
@@ -147,3 +151,71 @@ const _ = new Child({
 setTimeout(() => {
   _._start()
 }, 2000)
+
+
+const rectangle3 = new Rectangle({
+  originX: 0.5,
+  originY: 0.5,
+  x: 120,
+  y: 20,
+  fillStyle: '#194ff3',
+  width: 30,
+  height: 60
+})
+
+
+const rectangle4 = new Rectangle({
+  rotate: Math.PI / 4,
+  x: 150,
+  y: 0,
+  width: 30,
+  height: 30
+})
+
+const _2 = new Child({
+  controller,
+  auto: true,
+  loop:3
+})
+   .add(rectangle4)
+  .add(rectangle3, new Options({
+    before () {
+      console.log('添加前的钩子')
+    }
+  }))
+  .move({
+    target: rectangle3,
+    x: 80,
+    y: 20,
+    scaleX: 1.5,
+    time: 1000
+  })
+  .move([{
+    target: rectangle3,
+    rotate: 2 * Math.PI,
+    originX: 0,
+    originY: 0,
+    time: 1000
+  },
+  {
+    target: rectangle4,
+    scaleX: 1,
+    fillStyle: '#00f0f0',
+    scaleY: 0.5,
+    time: 2000
+  }
+  ])
+  .move({
+    target: rectangle3,
+    x: 120,
+    y: 50,
+    scaleX: 0.5,
+    fillStyle: '#f0ff0f',
+    time: 2000
+  })
+  .move({
+    target: rectangle3,
+    fillStyle: '#ff0030',
+    x: 90,
+    y: 0
+  })
