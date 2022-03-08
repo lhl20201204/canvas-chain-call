@@ -5,6 +5,7 @@ import log from "./middleware/log"
 import { colorHex, colourBlend, toInt } from "./util/color"
 import { extendOptions } from './util/extend'
 import { flattern } from './util'
+import Dynamic from "./Dynamic"
 const defaultTime = 1000
 const style = ['fillStyle', 'strokeStyle']
 const maxSize = 100 // 一组为多少个刷新，可以设置 Number.MAX_VALUE ,运动的时候不分批刷新
@@ -151,9 +152,9 @@ function run (options ) {
           } else {
             target[key] = init[key] + ratio * values[key] // 这样写不用考虑正负值
           }
+        } 
         }
-        }
-
+       
        _this._render()
         if (elapsed < time) { // 在time后停止动画
           window.requestAnimationFrame(step);
@@ -182,9 +183,8 @@ async function move (options) {
   if (!options) {
     throw new Error('没有参数')
   }
-  if (typeof options === 'function') {
-    const fn = options
-    options = fn(...[...arguments].slice(1))
+  if ( options instanceof Dynamic) {
+    options = options.cache
   }
   diff.call(this, options)
   return this._run(options)
@@ -198,14 +198,19 @@ async function draw (parent, ctx) {
   }
 }
 
+async function removeDynamic(x) {
+   return remove.call(this,  x.cache )
+}
+
 async function remove (child) {
-  if (typeof child === 'function') {
-    const fn = child
-    child = fn(...[...arguments].slice(1))
+  if ( child instanceof Dynamic) {
+    child = child.cache
+    // console.log('移除', child.id, Reflect.ownKeys(child), [...this.children])
   }
   if (Array.isArray(child)) {
     return await Promise.all(child.map(v => remove.call(this, v)))
   }
+
   if (this._hadExisted(child)) {
     child.remove()
   }
@@ -213,9 +218,8 @@ async function remove (child) {
 }
 
 async function add (child) {
-  if (typeof child === 'function') {
-    const fn = child
-    child = fn(...[...arguments].slice(1))
+  if ( child instanceof Dynamic) {
+    child = child.cache
   }
   if (Array.isArray(child)) {
     return await Promise.all(child.map(v => this._add(v)))
@@ -224,7 +228,7 @@ async function add (child) {
   if (!this._hadExisted(child)) {
     usedElements.push(child)
     children.push(child)
-    child.parent.value = this
+    child.animations.value = this
     child.draw(ctx)
   }
 }
@@ -281,3 +285,4 @@ MyCanvas.prototype.add = add
 MyCanvas.prototype._add = add
 MyCanvas.prototype.wait = wait
 MyCanvas.prototype.call = call
+MyCanvas.prototype.removeDynamic = removeDynamic

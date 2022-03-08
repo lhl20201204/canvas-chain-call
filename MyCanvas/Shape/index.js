@@ -2,13 +2,14 @@ let index = 0
 import transform from "../middleware/transform";
 import useMiddleWare from "../middleware/useMiddleWare";
 import { extendOptions } from '../util/extend'
-import { flattern } from '../util'
+
 const m = [transform]
 
 export default class Shape {
   constructor(options) {
     this.scaleX = 1
     this.scaleY = 1
+    this.alpha = 1
     this.fillStyle = '#000000'
     this.strokeStyle = '#000000'
     this.rotate = 0
@@ -32,7 +33,7 @@ export default class Shape {
       enumerable: false
     })
 
-    Object.defineProperty(this, "parent", {
+    Object.defineProperty(this, "animations", {
       value: {
         value: null
       },
@@ -52,7 +53,7 @@ export default class Shape {
   }
 }
 
-function remove (parent = this.parent.value.children) {
+function remove (parent = this.animations.value.children) {
     const len = parent.length
     for(let i =0;i<len;i ++) {
       if(!parent[i]) {

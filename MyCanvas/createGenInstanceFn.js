@@ -1,16 +1,4 @@
-const needHandles = ['move']
-function addInitStatus (children) {
-  if (Array.isArray(children)) {
-    return children.forEach(e => {
-      addInitStatus(e)
-    })
-  }
-  if (children instanceof Object && !Reflect.has(children, 'initStatus') && Reflect.has(children, 'target')) {
-    const { target, time = 1000, initStatus, endStatus, concurrent = false, ...rest } = children
-    children.initStatus = { ...children.target }
-    children.endStatus = { ...children.target, ...rest }
-  }
-}
+
 export default function createGenInstanceFn (ret, fnName, next) {
   return function () {
     const lastPromise = ret.promise // 链式调用核心
@@ -23,16 +11,6 @@ export default function createGenInstanceFn (ret, fnName, next) {
           })
         } else {
           (async () => {
-
-            let args = [...arguments]
-            const t = args[0]
-            if (needHandles.includes(fnName) && !t.hasAddInitSatus) {
-              addInitStatus(t)
-              Object.defineProperty(t, "hasAddInitSatus", {
-                value: true,
-                enumerable: false
-              })
-            }
             await next(...arguments)
             resolve({
               fnName,
