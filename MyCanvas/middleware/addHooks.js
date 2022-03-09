@@ -1,6 +1,5 @@
 import Options from "../Options"
 import Dynamic from "../Dynamic"
-import Rectangle from "../Shape/Rectangle"
 
 const needHandles = ['move']
 const unNeedGetresult = ['removeDynamic']
@@ -24,7 +23,7 @@ export default function(ret) {
             let t2 = args[0]
             if ( instance instanceof Dynamic && !unNeedGetresult.includes(f.fnName)) {
               if (!ret.isReversing) {
-                instance.getResult()
+                instance.getResult(ret)
               }
               t2 = instance.cache
             }

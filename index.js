@@ -3,17 +3,39 @@ import Rectangle from "./MyCanvas/Shape/Rectangle";
 import Ellipse from "./MyCanvas/Shape/Ellipse";
 import Controller from "./MyCanvas/Controller"
 import Dynamic from "./MyCanvas/Dynamic";
+import Text from "./MyCanvas/Shape/Text";
+import Texture from "./MyCanvas/Shape/Texture";
 class Child extends MyCanvas {
-
 }
 const canvas = document.getElementById('canvas')
 function rand (x) {
   return Math.floor(Math.random() * x)
 }
 const controller =  new Controller({
-   el: canvas
+   el: canvas,
+   longFail: true
 })
+ const image = new Texture({
+      src: './example1.jpg',
+      width: 90,
+      height: 50
+    })
 
+    const a = new Child({
+      auto:true,
+      controller
+    })
+    .add(image)
+    .wait(1000)
+    .move({
+      target: image,
+      x: 100,
+      y: 100,
+      time: 2000
+    })
+    .remove(image)
+
+    let count = 1
 for (let i= 0; i < 10;i ++) {
   (
   () => {
@@ -25,6 +47,20 @@ for (let i= 0; i < 10;i ++) {
      fillStyle: '#' + rand(0xffffff).toString(16)
   }))
   
+  const _4text = new Dynamic(({ctx}) => {
+  const text =  new Text({
+    fontSize: 5,
+    // originX: 0.5,
+    // originY: 0.25,
+    fillStyle: _4rec1.cache.fillStyle,
+    // content: _4rec1.cache.id,
+    content: count++,
+    x: _4rec1.cache.x,
+    y: _4rec1.cache.y
+  })
+  text._caculate(ctx)
+  return text
+})
   const _4balls = new Dynamic(() => new Array(12).fill(0).map((v, i) => {
     // console.log('生成', _4rec1.cache.x, _4rec1.cache.y)
     const rotate =  2 * Math.PI / 12 * i
@@ -45,7 +81,7 @@ for (let i= 0; i < 10;i ++) {
   // console.log(_4rec1)
   let len = 20
   const _4 = new Child({
-    auto: true,
+    promise: a.promise,
     infinity: true,
     // reverse: true,
     controller
@@ -58,11 +94,18 @@ for (let i= 0; i < 10;i ++) {
     time: 1000
   })))
   .removeDynamic(_4rec1)
+  .add(_4text)
   .add(_4balls)
   .call(()=> {
     len = 10 + rand(20)
   })
-  .move(new Dynamic(() =>_4balls.cache.map((v, i)=>{
+  .add(controller.copyDynamic(_4text))
+  .move(new Dynamic(() =>[
+    {
+      target: _4text.cache,
+      rotate:   2*Math.PI,
+    },
+    ..._4balls.cache.map((v)=>{
     const { rotate, x, y } = v  
     const sin = Math.sin(rotate) * len
     const cos = Math.cos(rotate) * len
@@ -70,138 +113,141 @@ for (let i= 0; i < 10;i ++) {
       target: v,
       x: x + cos,
       y: y + sin,
+      scaleX: 0.2,
+      scaleY: 0.2,
       time: 1000
     }
-  })))
-  .removeDynamic(_4balls)
-
+  })]))
+  .removeDynamic([_4balls, _4text])
+  
   })()
   }
 
-// const rectangle = new Rectangle({
-//   originX: 0.5,
-//   originY: 0.5,
-//   x: 20,
-//   y: 20,
-//   fillStyle: '#094323',
-//   width: 30,
-//   height: 40
-// })
+
+const rectangle = new Rectangle({
+  originX: 0.5,
+  originY: 0.5,
+  x: 20,
+  y: 20,
+  fillStyle: '#094323',
+  width: 30,
+  height: 40
+})
 
 
-// const rectangle2 = new Rectangle({
-//   rotate: Math.PI / 4,
-//   x: 40,
-//   y: 0,
-//   width: 40,
-//   height: 40
-// })
+const rectangle2 = new Rectangle({
+  rotate: Math.PI / 4,
+  x: 40,
+  y: 0,
+  width: 40,
+  height: 40
+})
 
-// const ellipse = new Ellipse({
-//   originX: 0.5,
-//   originY: 0.5,
-//   x: 70,
-//   y: 30,
-//   fillStyle: 'rgb(34,56,78)',
-//   radiusX: 10,
-//   radiusY: 10,
-//   rotation: 0,
-//   startAngle: 0,
-//   endAngle: Math.PI,
-//   anticlockwise: false
-// })
-
-
-
-// const balls = new Array(100).fill(0).map(v => {
-//   const r = 2 + rand(4)
-//   return new Ellipse({
-//     originX: 0.5,
-//     originY: 0.5,
-//     x: 70 + rand(100),
-//     y: 30 + rand(100),
-//     fillStyle: 'rgb(' + rand(255) + ',' + rand(255) + ',' + rand(255) + ')',
-//     radiusX: r,
-//     radiusY: r,
-//     rotation: 0,
-//     startAngle: 0,
-//     endAngle:  2*Math.PI,
-//     anticlockwise: false
-//   })
-
-// })
+const ellipse = new Ellipse({
+  originX: 0.5,
+  originY: 0.5,
+  x: 70,
+  y: 30,
+  fillStyle: 'rgb(34,56,78)',
+  radiusX: 10,
+  radiusY: 10,
+  rotation: 0,
+  startAngle: 0,
+  endAngle: Math.PI,
+  anticlockwise: false
+})
 
 
-// const _ = new Child({
-//   controller,
-//   reverse: true,
-//   // auto: true,
-//   infinity: true
-// }).call(() => {
-//   console.log('重新开始刷新')
-// })
-// .add(rectangle2)
-//   .wait(1000)
-//   .add(rectangle)
-//   .wait(1000)
-//   .move({
-//     target: rectangle,
-//     x: 50,
-//     y: 50,
-//     scaleX: 2,
-//     time: 2000
-//   })
-//   .move([{
-//     target: rectangle,
-//     rotate: 2 * Math.PI,
-//     originX: 0,
-//     originY: 0,
-//     alpha: 0,
-//     time: 2000
-//   },
-//   {
-//     target: rectangle2,
-//     scaleX: 0.5,
-//     fillStyle: '#00f0f0',
-//     scaleY: 0.5
-//   }
-//   ])
-//   .move({
-//     target: rectangle,
-//     x: 20,
-//     y: 50,
-//     scaleX: 0.5,
-//     fillStyle: '#f0ff00',
-//     alpha: 1,
-//     time: 2000
-//   })
-//   .wait(1000)
-//   .move({
-//     target: rectangle,
-//     fillStyle: '#f00f30',
-//     x: 0,
-//     y: 0
-//   })
-//   .wait(1000)
-//   .remove([rectangle2, rectangle])
-//   .add(ellipse)
-//   .move({
-//     target: ellipse,
-//     rotate: Math.PI,
-//     fillStyle: '#00ff00',
-//     endAngle: 2* Math.PI,
-//     time: 1000
-//   })
-//   .add(balls)
-//   .move(new Dynamic(() => [[balls.map(v => {
-//     return {
-//       target: v,
-//       ...v,
-//       x: rand(300),
-//       y: rand(100),
-//       time: 1000 + rand(1000)
-//     }
-//   })]])) 
+
+const balls = new Array(100).fill(0).map(v => {
+  const r = 2 + rand(4)
+  return new Ellipse({
+    originX: 0.5,
+    originY: 0.5,
+    x: 70 + rand(100),
+    y: 30 + rand(100),
+    fillStyle: 'rgb(' + rand(255) + ',' + rand(255) + ',' + rand(255) + ')',
+    radiusX: r,
+    radiusY: r,
+    rotation: 0,
+    startAngle: 0,
+    endAngle:  2*Math.PI,
+    anticlockwise: false
+  })
+
+})
+
+
+const _ = new Child({
+  controller,
+  reverse: true,
+  // auto: true,
+  infinity: true
+}).call(() => {
+  console.log('重新开始刷新')
+})
+.add(rectangle2)
+  .wait(1000)
+  .add(rectangle)
+  .wait(1000)
+  .move({
+    target: rectangle,
+    x: 50,
+    y: 50,
+    scaleX: 2,
+    time: 2000
+  })
+  .move([{
+    target: rectangle,
+    rotate: 2 * Math.PI,
+    originX: 0,
+    originY: 0,
+    alpha: 0,
+    time: 2000
+  },
+  {
+    target: rectangle2,
+    scaleX: 0.5,
+    fillStyle: '#00f0f0',
+    scaleY: 0.5
+  }
+  ])
+  .move({
+    target: rectangle,
+    x: 20,
+    y: 50,
+    scaleX: 0.5,
+    fillStyle: '#f0ff00',
+    alpha: 1,
+    time: 2000
+  })
+  .wait(1000)
+  .move({
+    target: rectangle,
+    fillStyle: '#f00f30',
+    x: 0,
+    y: 0
+  })
+  .wait(1000)
+  .remove([rectangle2, rectangle])
+  .add(ellipse)
+  .move({
+    target: ellipse,
+    rotate: Math.PI,
+    fillStyle: '#00ff00',
+    endAngle: 2* Math.PI,
+    time: 1000
+  })
+  .add(balls)
+  .move(new Dynamic(() => [[balls.map(v => {
+    return {
+      target: v,
+      ...v,
+      x: rand(300),
+      y: rand(100),
+      time: 1000 + rand(1000)
+    }
+  })]])) 
 
 
 
@@ -269,7 +315,7 @@ for (let i= 0; i < 10;i ++) {
 //     x: 90,
 //     y: 0
 //   })
-// // _._start()
+// _._start()
 // setTimeout(() => {
 //   // _._start()
 // }, 2000)

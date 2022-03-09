@@ -11,7 +11,7 @@ export default class Dynamic {
         
     }
 
-    getResult() {
-        this.cache = this.fn()
+    getResult(ret) {
+        this.cache = this.fn(ret)
     }
 }

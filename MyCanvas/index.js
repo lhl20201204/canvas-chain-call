@@ -40,6 +40,7 @@ export default class MyCanvas {
     options.height = options.el.height
     options.animations = controller.animations
     options._render = controller.render
+    options.longFail = controller.longFail
     extendOptions(this, options)
     useMiddleWare(this, m)
     controller.animations.push(this)
@@ -199,6 +200,9 @@ async function draw (parent, ctx) {
 }
 
 async function removeDynamic(x) {
+   if (Array.isArray(x)) {
+     return Promise.all(x.map(v => removeDynamic.call(this, v)))
+   }
    return remove.call(this,  x.cache )
 }
 

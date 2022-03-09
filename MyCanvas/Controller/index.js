@@ -1,5 +1,7 @@
 import { extendOptions } from '../util/extend'
 import { throttle } from '../util'
+import Shape from '../Shape'
+import Dynamic from '../Dynamic'
 export default class Controller  {
   constructor (options = {}) {
     if (!options.el) {
@@ -19,7 +21,7 @@ export default class Controller  {
   canvas.style.height = height + "px";
   canvas.height = height  ;
   canvas.width = width ;	  
-  options.ctx.scale(ratio, ratio);  
+  options.ctx.scale(ratio, ratio); 
   extendOptions(this, options)
   }
 
@@ -27,14 +29,34 @@ export default class Controller  {
 }
 
 function render () {
-  const { animations, width, height, ctx } = this
-  ctx.clearRect(0, 0, width, height);
+  const { longFail, animations, width, height, ctx } = this
+  if (longFail) {
+     ctx.fillStyle = 'rgba(255,255,255,0.3)';
+     ctx.fillRect(0,0,width,height);
+  } else {
+    ctx.clearRect(0,0,width,height);
+  }
+
    for(const a of animations) {
     const { children } = a
     a._draw(children, ctx)
    }
  }
 
+
+ function copyDynamic(target) {
+   if (!target instanceof Shape) {
+     throw new Error('必须穿一个shape类型的实例对象')
+   }
+   return new Dynamic(() => {
+     return new (Reflect.getPrototypeOf(target.cache).constructor)({
+     ...target.cache
+   })
+  })
+
+ }
+
+
  
- 
+ Controller.prototype.copyDynamic = copyDynamic
  Controller.prototype.render =  throttle(render, 50/ 3)
