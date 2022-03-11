@@ -17,20 +17,21 @@ const controller =  new Controller({
 })
  const image = new Texture({
       src: './example1.jpg',
+      originX: 1,
+      originY: 0.5,
       width: 90,
       height: 50
     })
 
     const a = new Child({
-      auto:true,
+      // auto:true,
       controller
     })
     .add(image)
     .wait(1000)
     .move({
       target: image,
-      x: 100,
-      y: 100,
+      rotate: - Math.PI /2,
       time: 2000
     })
     .remove(image)
@@ -59,19 +60,23 @@ for (let i= 0; i < 10;i ++) {
     y: _4rec1.cache.y
   })
   text._caculate(ctx)
+  text.x = text.x - text.width / 4
   return text
 })
   const _4balls = new Dynamic(() => new Array(12).fill(0).map((v, i) => {
     // console.log('生成', _4rec1.cache.x, _4rec1.cache.y)
-    const rotate =  2 * Math.PI / 12 * i
-    return new Ellipse({ 
-      rotate,
+    const myRotate =  2 * Math.PI / 12 * i
+    return new Ellipse({  
+      myRotate,
       x: _4rec1.cache.x,
       y: _4rec1.cache.y,
+      scaleX: 0.5,
+      scaleY: 0.5,
       radiusX: 1,
       radiusY: 1,
       rotation: 0,
       fillStyle: _4rec1.cache.fillStyle,
+      // fillStyle: '#' + rand(0xffffff).toString(16),
       startAngle: 0,
       endAngle:  2*Math.PI,
       anticlockwise: false
@@ -88,7 +93,8 @@ for (let i= 0; i < 10;i ++) {
   let len = 20
   let color =  '#' + rand(0xffffff).toString(16)
   const _4 = new Child({
-    promise: a.promise,
+    auto: true,
+    // promise: a.promise,
     infinity: true,
     // reverse: true,
     controller
@@ -105,49 +111,75 @@ for (let i= 0; i < 10;i ++) {
   .add(_4balls)
   .call(()=> {
     len = 20 + rand(20)
-    color =  '#' + rand(0xffffff).toString(16)
   })
   .add(controller.copyDynamic(_4text))
-  // .add(_4ballsCopy)
   .move(new Dynamic(() =>[
-    // {
-    //   target: _4text.cache,
-    //   rotate:   2*Math.PI,
-    // },
+    {
+      target: _4text.cache,
+      rotate:   2*Math.PI,
+    },
     ..._4balls.cache.map((v, i)=>{
-    const { rotate, x, y } = v  
-    const sin = Math.sin(rotate) * len
-    const cos = Math.cos(rotate) * len
+    const { myRotate, x, y } = v  
+    const sin = Math.sin(myRotate) * len
+    const cos = Math.cos(myRotate) * len
     return {
       target: v,
       x: x + cos,
       y: y + sin,
-      curse: {
+      curve: {
         x: x + cos/2,
-        y: y + sin/2
+        y: y + sin/2  - 10 *(i - 6)
       },
-      fillStyle: color,
-      scaleX: 0.2,
-      scaleY: 0.2,
       time: 1000
     }
-  }),
-  // ..._4ballsCopy.cache.map((v, i)=>{
-   
-  //   const { rotate, x, y } = v   
-  //   const sin = Math.sin(rotate) * len
-  //   const cos = Math.cos(rotate) * len
-  //   return {
-  //     target: v,
-  //     x: x + cos,
-  //     y: y + sin,
-  //     scaleX: 0.2,
-  //     scaleY: 0.2,
-  //     time: 3000
-  //   }
-  // }),
+  })
 ]))
   .removeDynamic([_4balls, _4text ])
+  .call(()=> {
+    len = len /2
+  })
+  .move(
+    new Dynamic(() =>[
+    ..._4balls.cache.map((v, i)=>{
+    const { myRotate, x, y } = v  
+    const sin = Math.sin(myRotate) * -len
+    const cos = Math.cos(myRotate) * -len
+    return {
+      target: v,
+      x: x + cos,
+      y: y + sin,
+      scaleX: 0.5,
+      scaleY: 0.5,
+      time: 1000
+    }
+    }),
+   ])
+  )
+  .call(() => {
+    for(const v of _4balls.cache) {
+      const { myRotate } = v  
+      const sin = Math.sin(myRotate) * len  
+      const cos = Math.cos(myRotate) * len  
+      v.x += cos / (v.radiusX) /2
+      v.y += sin / (v.radiusY) /2
+      v.originX = -cos / (v.radiusX) 
+      v.originY = -sin / (v.radiusY) 
+    }
+  })
+  .move(
+    new Dynamic(() =>[
+    ..._4balls.cache.map((v, i)=>{
+    return {
+      target: v,
+      rotate: 2 * Math.PI ,
+      // scaleX: 0.2,
+      // scaleY: 0.2,
+      time: 2000
+    }
+    }),
+   ])
+  )
+
   
   })()
   }

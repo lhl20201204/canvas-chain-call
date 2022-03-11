@@ -142,7 +142,7 @@ function run (options ) {
           if (currentOptions.endRender) {
             continue
           }
-        const { diffs, target , time, curse } = currentOptions
+        const { diffs, target , time, curve } = currentOptions
         const { init, values, keys  } = diffs
         const ratio = Math.min(elapsed / time, 1)
         if (ratio === 1) {
@@ -152,8 +152,8 @@ function run (options ) {
           if (style.includes(key)) {
             target[key] = colourBlend(init[key], values[key], ratio)
           } else {
-            if (curse && curse[key]) {
-              target[key] = bezierCurve(init[key], curse[key], init[key] + values[key], ratio)
+            if (curve && curve[key]) {
+              target[key] = bezierCurve(init[key], curve[key], init[key] + values[key], ratio)
             }else {
                target[key] = init[key] + ratio * values[key] // 这样写不用考虑正负值
             }
@@ -230,12 +230,16 @@ async function remove (child) {
 }
 
 async function add (child) {
+  
   if ( child instanceof Dynamic) {
     child = child.cache
   }
+
   if (Array.isArray(child)) {
     return await Promise.all(child.map(v => this._add(v)))
   }
+
+  
   const { children, ctx, usedElements } = this
   if (!this._hadExisted(child)) {
     usedElements.push(child)
