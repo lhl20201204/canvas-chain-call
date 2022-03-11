@@ -44,14 +44,14 @@ function render () {
  }
 
 
- function copyDynamic(target) {
-   if (!target instanceof Shape) {
-     throw new Error('必须穿一个shape类型的实例对象')
-   }
-   return new Dynamic(() => {
-     return new (Reflect.getPrototypeOf(target.cache).constructor)({
-     ...target.cache
-   })
+ function copyDynamic(target, fn = t=>t) {
+   function copyAll (t) {
+       return Array.isArray(t) ? t.map(v => copyAll(v)) : new (Reflect.getPrototypeOf(t).constructor)({
+       ...fn(t)
+      })
+     }
+   return new Dynamic(() => {    
+     return copyAll(target.cache)
   })
 
  }

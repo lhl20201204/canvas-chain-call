@@ -6,6 +6,7 @@ import { colorHex, colourBlend, toInt } from "./util/color"
 import { extendOptions } from './util/extend'
 import { flattern } from './util'
 import Dynamic from "./Dynamic"
+import bezierCurve from "./util/math"
 const defaultTime = 1000
 const style = ['fillStyle', 'strokeStyle']
 const maxSize = 100 // 一组为多少个刷新，可以设置 Number.MAX_VALUE ,运动的时候不分批刷新
@@ -141,7 +142,7 @@ function run (options ) {
           if (currentOptions.endRender) {
             continue
           }
-        const { diffs, target , time} = currentOptions
+        const { diffs, target , time, curse } = currentOptions
         const { init, values, keys  } = diffs
         const ratio = Math.min(elapsed / time, 1)
         if (ratio === 1) {
@@ -151,7 +152,11 @@ function run (options ) {
           if (style.includes(key)) {
             target[key] = colourBlend(init[key], values[key], ratio)
           } else {
-            target[key] = init[key] + ratio * values[key] // 这样写不用考虑正负值
+            if (curse && curse[key]) {
+              target[key] = bezierCurve(init[key], curse[key], init[key] + values[key], ratio)
+            }else {
+               target[key] = init[key] + ratio * values[key] // 这样写不用考虑正负值
+            }
           }
         } 
         }
@@ -202,6 +207,9 @@ async function draw (parent, ctx) {
 async function removeDynamic(x) {
    if (Array.isArray(x)) {
      return Promise.all(x.map(v => removeDynamic.call(this, v)))
+   }
+   if (!(x instanceof Dynamic)) {
+     throw new Error('不是dynamic实例')
    }
    return remove.call(this,  x.cache )
 }

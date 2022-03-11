@@ -45,7 +45,7 @@ for (let i= 0; i < 10;i ++) {
      width: 1,
      height: 4,
      fillStyle: '#' + rand(0xffffff).toString(16)
-  }))
+     }))
   
   const _4text = new Dynamic(({ctx}) => {
   const text =  new Text({
@@ -77,9 +77,16 @@ for (let i= 0; i < 10;i ++) {
       anticlockwise: false
     })
   })) 
-  
+
+  const _4ballsCopy = controller.copyDynamic(_4balls, (t) => ({
+  ...t,
+  // rotate: t.rotate + Math.PI /4
+  }))
+   
+
   // console.log(_4rec1)
   let len = 20
+  let color =  '#' + rand(0xffffff).toString(16)
   const _4 = new Child({
     promise: a.promise,
     infinity: true,
@@ -97,15 +104,17 @@ for (let i= 0; i < 10;i ++) {
   .add(_4text)
   .add(_4balls)
   .call(()=> {
-    len = 10 + rand(20)
+    len = 20 + rand(20)
+    color =  '#' + rand(0xffffff).toString(16)
   })
   .add(controller.copyDynamic(_4text))
+  // .add(_4ballsCopy)
   .move(new Dynamic(() =>[
-    {
-      target: _4text.cache,
-      rotate:   2*Math.PI,
-    },
-    ..._4balls.cache.map((v)=>{
+    // {
+    //   target: _4text.cache,
+    //   rotate:   2*Math.PI,
+    // },
+    ..._4balls.cache.map((v, i)=>{
     const { rotate, x, y } = v  
     const sin = Math.sin(rotate) * len
     const cos = Math.cos(rotate) * len
@@ -113,12 +122,32 @@ for (let i= 0; i < 10;i ++) {
       target: v,
       x: x + cos,
       y: y + sin,
+      curse: {
+        x: x + cos/2,
+        y: y + sin/2
+      },
+      fillStyle: color,
       scaleX: 0.2,
       scaleY: 0.2,
       time: 1000
     }
-  })]))
-  .removeDynamic([_4balls, _4text])
+  }),
+  // ..._4ballsCopy.cache.map((v, i)=>{
+   
+  //   const { rotate, x, y } = v   
+  //   const sin = Math.sin(rotate) * len
+  //   const cos = Math.cos(rotate) * len
+  //   return {
+  //     target: v,
+  //     x: x + cos,
+  //     y: y + sin,
+  //     scaleX: 0.2,
+  //     scaleY: 0.2,
+  //     time: 3000
+  //   }
+  // }),
+]))
+  .removeDynamic([_4balls, _4text ])
   
   })()
   }
