@@ -1,5 +1,6 @@
 import Options from "../Options"
 import Dynamic from "../Dynamic"
+import Group from "../Shape/Group"
 
 const needHandles = ['move']
 const unNeedGetresult = ['removeDynamic']
@@ -9,10 +10,11 @@ function addInitStatus (children) {
       addInitStatus(e)
     })
   }
+  
   if (children instanceof Object && !Reflect.has(children, 'initStatus') && Reflect.has(children, 'target')) {
-    const { target, time = 1000, initStatus, endStatus, concurrent = false, ...rest } = children
-    children.initStatus = { ...children.target }
-    children.endStatus = { ...children.target, ...rest }
+    const { target, time = 1000, children:c , ...rest } = children
+    children.initStatus = { ...target }
+    children.endStatus = { ...target, ...rest }
   }
 }
 export default function(ret) {

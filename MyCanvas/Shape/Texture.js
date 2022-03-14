@@ -1,5 +1,6 @@
 
 import Shape from "./index";
+import { getTotalXY } from "../util/math";
 export default class Texture extends Shape {
   constructor(options ={}) {
     if (!options.src) {
@@ -22,7 +23,8 @@ export default class Texture extends Shape {
   }
 
    draw (ctx) {
-      const { hadLoad, image, x, y, width, height, sx=0, sy=0, sWidth, sHeight} = this
+      const { hadLoad, image, width, height, sx=0, sy=0, sWidth, sHeight} = this
+      const { x, y } = this.isInGroup.value ? getTotalXY(this) : this
       if (hadLoad) {
         if (!width || !height) {
           ctx.drawImage(image, x, y)

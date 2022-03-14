@@ -1,5 +1,6 @@
 
 import Shape from "./index";
+import { getTotalXY } from "../util/math";
 export default class Text extends Shape {
     constructor(options ={}) {
         super({
@@ -11,7 +12,8 @@ export default class Text extends Shape {
       }
 
    draw(ctx) {
-      const { x, y, content, fontSize, fontType, isStorke, textBaseline } = this
+      const {  content, fontSize, fontType, isStorke, textBaseline } = this
+      const { x, y } = this.isInGroup.value ? getTotalXY(this) : this
       ctx.textBaseline = textBaseline
       ctx.font = `${fontSize}px ${fontType}`;
       if (isStorke) {

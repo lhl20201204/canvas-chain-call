@@ -6,7 +6,8 @@ import { colorHex, colourBlend, toInt } from "./util/color"
 import { extendOptions } from './util/extend'
 import { flattern } from './util'
 import Dynamic from "./Dynamic"
-import bezierCurve from "./util/math"
+import { bezierCurve } from "./util/math"
+import Group from "./Shape/Group"
 const defaultTime = 1000
 const style = ['fillStyle', 'strokeStyle']
 const maxSize = 100 // 一组为多少个刷新，可以设置 Number.MAX_VALUE ,运动的时候不分批刷新
@@ -64,16 +65,11 @@ async function call (fn) {
 
 function diff (options) {
   if (Array.isArray(options)) {
-    options.time = 0
-    options.forEach(e => {
-      diff.call(this, e) 
-      options.time = Math.max(options.time, e.time)
-    })
-    return 
+    return options.time = Math.max(...options.map(e => diff.call(this, e)))
   }
-
+  
   options.time = options.time || defaultTime
-  const { target, time, initStatus, endStatus, ...rest } = options
+  const { target, time, endRender, initStatus, endStatus, ...rest } = options
   if (!target) {
     throw new Error('没有操作对象')
   }
@@ -113,10 +109,12 @@ function diff (options) {
       }
     }
   }
+  
   diffs.init = {
     ...start
   }
   options.diffs = diffs
+  return options.time
 }
 
 
@@ -246,12 +244,31 @@ async function add (child) {
     children.push(child)
     child.animations.value = this
     child.draw(ctx)
+    if (child instanceof Group) {
+      for (const c of child.children) {
+           c.isInGroup.value = true
+           c.animations.value = this
+           c.parent = child   
+      }
+     
+    }
   }
 }
 
 
 function getReverseFn (flag, fnName) {
   return flag ? needReverseFn.includes(fnName) ? reverseFnStore[fnName] : fnName : fnName
+}
+
+function reset (e) {
+  if (Array.isArray(e)) {
+    return e.map(v => reset(v))
+  } 
+  if (e instanceof Group) {
+    reset(e.children)
+  }
+  e.reset(e.initStatus)
+ 
 }
 
 async function _reStart () {
@@ -266,7 +283,7 @@ async function _reStart () {
   }
   this.usedElements.forEach(e => {
     if (!this.isReversing) {
-      e.reset(e.initStatus)
+      reset(e)
     }
   })
 

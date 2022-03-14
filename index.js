@@ -5,6 +5,7 @@ import Controller from "./MyCanvas/Controller"
 import Dynamic from "./MyCanvas/Dynamic";
 import Text from "./MyCanvas/Shape/Text";
 import Texture from "./MyCanvas/Shape/Texture";
+import Group from "./MyCanvas/Shape/Group";
 class Child extends MyCanvas {
 }
 const canvas = document.getElementById('canvas')
@@ -13,8 +14,128 @@ function rand (x) {
 }
 const controller =  new Controller({
    el: canvas,
-   longFail: true
+  //  longFail: true // 长尾特效是否开启s
 })
+
+;(()=> {
+  const rec1 = new Rectangle({
+    x: 20,
+    y: 20,
+    width: 20,
+    height: 40  
+  })
+
+  const rec2 = new Rectangle({
+    x: 20,
+    y: 20,
+    rotate: -Math.PI / 4,
+    // originX: 0.5,
+    // originY: 0.5,
+    width: 20,
+    height: 40  
+  })
+
+ const animations = new Child({
+   controller,
+  //  auto: true
+ })
+//  .add(rec1)
+ .add(rec2)
+ .wait(2000)
+ .move([
+  //  {
+  //  target: rec1,
+  //  rotate: 2 * Math.PI,
+  //  time: 2000
+  // }, 
+ {
+   target: rec2,
+   rotate:  2 *Math.PI,
+   time: 2000
+ }])
+
+
+})();
+
+;(()=> {
+  const rec1 = new Rectangle({
+    x: 30,
+    y: 30,
+    height: 10,
+    width: 30
+  })
+
+  const rec2 = new Rectangle({
+    // rotate: Math.PI,
+    height: 10,
+    width: 30,
+    scaleX: 0.5,
+    scaleY: 0.5,
+  })
+
+  const rec3 = new Rectangle({
+    x: 15,
+    y: 5,
+    // rotate: Math.PI,
+    height: 10,
+    width: 30,
+    // scaleX: 0.5,
+    // scaleY: 0.5,
+  })
+
+
+  const group = new Group({
+    x: 120,
+    y: 60,
+    rotate: Math.PI /2 ,
+    scaleX: 2,
+    scaleY: 2,
+    fillStyle: '#ff0ff0'
+  })
+  // console.log(group)
+
+  group.add([rec2, rec3]) 
+
+
+  const animations = new Child({
+    controller,
+    auto: true,
+    infinity: true,
+    reverse: true,
+    // loop: 3
+  })
+  //  .add(rec1)
+  //  .move({
+  //   target: rec1,
+  //   rotate: Math.PI,
+  // })
+  .add(group)
+  // .call(() => {
+  //   // console.log({...rec2})
+  // })
+  .move(
+  [ 
+    {
+      target: rec3,
+      rotate: Math.PI / 2,
+      time: 3000
+    },
+    {
+    target: group,
+    rotate: 5*Math.PI/2,
+    scaleX: 1,
+    scaleY: 1,
+    time: 3000
+    }
+  ]
+  )
+  // .wait(1000)
+
+})();
+
+
+
+
  const image = new Texture({
       src: './example1.jpg',
       originX: 1,
@@ -93,7 +214,7 @@ for (let i= 0; i < 10;i ++) {
   let len = 20
   let color =  '#' + rand(0xffffff).toString(16)
   const _4 = new Child({
-    auto: true,
+    // auto: true,
     // promise: a.promise,
     infinity: true,
     // reverse: true,
@@ -166,6 +287,7 @@ for (let i= 0; i < 10;i ++) {
       v.originY = -sin / (v.radiusY) 
     }
   })
+
   .move(
     new Dynamic(() =>[
     ..._4balls.cache.map((v, i)=>{
