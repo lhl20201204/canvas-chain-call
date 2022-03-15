@@ -14,10 +14,21 @@ function rand (x) {
 }
 const controller =  new Controller({
    el: canvas,
-  //  longFail: true // 长尾特效是否开启s
+   longFail: true // 长尾特效是否开启s
 })
 
-;(()=> {
+let c = {
+  _1: null,
+  _2:null,
+  _3:null,
+  _4:null,
+  _5: null,
+  _6: null,
+  _7: []
+}
+
+
+;((c)=> {
   const rec1 = new Rectangle({
     x: 20,
     y: 20,
@@ -35,7 +46,7 @@ const controller =  new Controller({
     height: 40  
   })
 
- const animations = new Child({
+  c._1 = new Child({
    controller,
   //  auto: true
  })
@@ -55,9 +66,9 @@ const controller =  new Controller({
  }])
 
 
-})();
+})(c);
 
-;(()=> {
+;((c)=> {
   const rec1 = new Rectangle({
     x: 30,
     y: 30,
@@ -97,9 +108,9 @@ const controller =  new Controller({
   group.add([rec2, rec3]) 
 
 
-  const animations = new Child({
+   c._2 = new Child({
     controller,
-    auto: true,
+    // auto: true,
     infinity: true,
     reverse: true,
     // loop: 3
@@ -116,27 +127,25 @@ const controller =  new Controller({
   .move(
   [ 
     {
-      target: rec3,
-      rotate: Math.PI / 2,
-      time: 3000
-    },
-    {
     target: group,
     rotate: 5*Math.PI/2,
     scaleX: 1,
     scaleY: 1,
     time: 3000
-    }
+    },
+    {
+      target: rec3,
+      rotate: Math.PI / 2,
+      time: 3000
+    },
   ]
   )
   // .wait(1000)
 
-})();
+})(c);
 
-
-
-
- const image = new Texture({
+;((c) => {
+const image = new Texture({
       src: './example1.jpg',
       originX: 1,
       originY: 0.5,
@@ -144,7 +153,7 @@ const controller =  new Controller({
       height: 50
     })
 
-    const a = new Child({
+    c._3 = new Child({
       // auto:true,
       controller
     })
@@ -156,8 +165,286 @@ const controller =  new Controller({
       time: 2000
     })
     .remove(image)
+})(c);
 
-    let count = 1
+ 
+;((c)=> {
+const rectangle = new Rectangle({
+  originX: 0.5,
+  originY: 0.5,
+  x: 20,
+  y: 20,
+  fillStyle: '#094323',
+  width: 30,
+  height: 40
+})
+
+
+const rectangle2 = new Rectangle({
+  rotate: Math.PI / 4,
+  x: 40,
+  y: 0,
+  width: 40,
+  height: 40
+})
+
+const ellipse = new Ellipse({
+  originX: 0.5,
+  originY: 0.5,
+  x: 70,
+  y: 30,
+  fillStyle: 'rgb(34,56,78)',
+  radiusX: 10,
+  radiusY: 10,
+  rotation: 0,
+  startAngle: 0,
+  endAngle: Math.PI,
+  anticlockwise: false
+})
+
+
+
+const balls = new Array(100).fill(0).map(v => {
+  const r = 2 + rand(4)
+  return new Ellipse({
+    originX: 0.5,
+    originY: 0.5,
+    x: 70 + rand(100),
+    y: 30 + rand(100),
+    fillStyle: 'rgb(' + rand(255) + ',' + rand(255) + ',' + rand(255) + ')',
+    radiusX: r,
+    radiusY: r,
+    rotation: 0,
+    startAngle: 0,
+    endAngle:  2*Math.PI,
+    anticlockwise: false
+  })
+
+})
+
+
+ c._4 = new Child({
+  controller,
+  reverse: true,
+  // auto: true,
+  infinity: true
+}).call(() => {
+  console.log('重新开始刷新')
+})
+.add(rectangle2)
+  .wait(1000)
+  .add(rectangle)
+  .wait(1000)
+  .move({
+    target: rectangle,
+    x: 50,
+    y: 50,
+    scaleX: 2,
+    time: 2000
+  })
+  .move([{
+    target: rectangle,
+    rotate: 2 * Math.PI,
+    originX: 0,
+    originY: 0,
+    alpha: 0,
+    time: 2000
+  },
+  {
+    target: rectangle2,
+    scaleX: 0.5,
+    fillStyle: '#00f0f0',
+    scaleY: 0.5
+  }
+  ])
+  .move({
+    target: rectangle,
+    x: 20,
+    y: 50,
+    scaleX: 0.5,
+    fillStyle: '#f0ff00',
+    alpha: 1,
+    time: 2000
+  })
+  .wait(1000)
+  .move({
+    target: rectangle,
+    fillStyle: '#f00f30',
+    x: 0,
+    y: 0
+  })
+  .wait(1000)
+  .remove([rectangle2, rectangle])
+  .add(ellipse)
+  .move({
+    target: ellipse,
+    rotate: Math.PI,
+    fillStyle: '#00ff00',
+    endAngle: 2* Math.PI,
+    time: 1000
+  })
+  .add(balls)
+  .move(new Dynamic(() => [[balls.map(v => {
+    return {
+      target: v,
+      ...v,
+      x: rand(300),
+      y: rand(100),
+      time: 1000 + rand(1000)
+    }
+  })]])) 
+
+})(c);
+
+;((c)=>{
+const rectangle3 = new Rectangle({
+  originX: 0.5,
+  originY: 0.5,
+  x: 120,
+  y: 20,
+  fillStyle: '#194ff3',
+  width: 30,
+  height: 60
+})
+
+
+const rectangle4 = new Rectangle({
+  rotate: Math.PI / 4,
+  x: 150,
+  y: 0,
+  width: 30,
+  height: 30
+})
+
+c._5 = new Child({
+  controller,
+  // auto: true,
+  // loop:3,
+  reverse:true,
+  infinity: true
+})
+   .add(rectangle4)
+  .add(rectangle3)
+  .move({
+    target: rectangle3,
+    x: 80,
+    y: 20,
+    scaleX: 1.5,
+    time: 1000
+  })
+  .move([{
+    target: rectangle3,
+    rotate: 2 * Math.PI,
+    originX: 0,
+    originY: 0,
+    time: 1000
+  },
+  {
+    target: rectangle4,
+    scaleX: 1,
+    fillStyle: '#00f0f0',
+    scaleY: 0.5,
+    time: 1000
+  }
+  ])
+  .move({
+    target: rectangle3,
+    x: 120,
+    y: 50,
+    scaleX: 0.5,
+    fillStyle: '#f0ff0f',
+    time: 1000
+  })
+  .move({
+    target: rectangle3,
+    fillStyle: '#ff0030',
+    x: 90,
+    y: 0
+  })
+})(c);
+
+
+;((c)=>{
+const rec1 = new Rectangle({
+  x: 200,
+  y: 120,
+  height: 20,
+  width: 30,
+  originX: 0.5,
+  originY: -2,
+})
+
+const rec2 = new Rectangle({
+  x: 100,
+  y: 100,
+  height: 20,
+  width: 30,
+  originX: 0.5,
+  originY: -2,
+})
+
+const eli1 = new Ellipse({
+  originX: 0.5,
+  originY: -4,
+  x: 170,
+  y: 120,
+  radiusX: 10,
+  radiusY: 10,
+  rotation: 0,
+  startAngle: 0,
+  endAngle:  2*Math.PI,
+  anticlockwise: false
+})
+
+const eli2 = new Ellipse({
+  originX: 0.5,
+  originY: -4,
+  x: 170,
+  y: 100,
+  radiusX: 5,
+  radiusY: 5,
+  rotation: 0,
+  startAngle: 0,
+  endAngle:  2*Math.PI,
+  anticlockwise: false
+})
+
+const eli3 = new Ellipse({
+  originX: 0.5,
+  originY: -12,
+  x: 170,
+  y: 140,
+  radiusX: 5,
+  radiusY: 5,
+  rotation: 0,
+  startAngle: 0,
+  endAngle:  2*Math.PI,
+  anticlockwise: false
+})
+
+c._6 = new Child({
+  controller,
+  // auto: true,
+  infinity: true
+})
+.move([{
+  target: eli2,
+  rotate: 6 *Math.PI,
+  time: 8000
+},{
+  target: eli1,
+  rotate: -4 *Math.PI,
+  time: 8000
+}, {
+  target: eli3,
+  rotate: 2 * Math.PI,
+  time: 8000
+}])
+
+})(c)
+
+;((c) => {
+  let count = 1
 for (let i= 0; i < 10;i ++) {
   (
   () => {
@@ -249,7 +536,7 @@ for (let i= 0; i < 10;i ++) {
       y: y + sin,
       curve: {
         x: x + cos/2,
-        y: y + sin/2  - 10 *(i - 6)
+        y: y + sin/2  - 10 *(i - rand(6))
       },
       time: 1000
     }
@@ -301,281 +588,17 @@ for (let i= 0; i < 10;i ++) {
     }),
    ])
   )
-
-  
+   c._7.push(_4)  
   })()
   }
+})(c);
 
-
-const rectangle = new Rectangle({
-  originX: 0.5,
-  originY: 0.5,
-  x: 20,
-  y: 20,
-  fillStyle: '#094323',
-  width: 30,
-  height: 40
-})
-
-
-const rectangle2 = new Rectangle({
-  rotate: Math.PI / 4,
-  x: 40,
-  y: 0,
-  width: 40,
-  height: 40
-})
-
-const ellipse = new Ellipse({
-  originX: 0.5,
-  originY: 0.5,
-  x: 70,
-  y: 30,
-  fillStyle: 'rgb(34,56,78)',
-  radiusX: 10,
-  radiusY: 10,
-  rotation: 0,
-  startAngle: 0,
-  endAngle: Math.PI,
-  anticlockwise: false
-})
-
-
-
-const balls = new Array(100).fill(0).map(v => {
-  const r = 2 + rand(4)
-  return new Ellipse({
-    originX: 0.5,
-    originY: 0.5,
-    x: 70 + rand(100),
-    y: 30 + rand(100),
-    fillStyle: 'rgb(' + rand(255) + ',' + rand(255) + ',' + rand(255) + ')',
-    radiusX: r,
-    radiusY: r,
-    rotation: 0,
-    startAngle: 0,
-    endAngle:  2*Math.PI,
-    anticlockwise: false
-  })
-
-})
-
-
-const _ = new Child({
-  controller,
-  reverse: true,
-  // auto: true,
-  infinity: true
-}).call(() => {
-  console.log('重新开始刷新')
-})
-.add(rectangle2)
-  .wait(1000)
-  .add(rectangle)
-  .wait(1000)
-  .move({
-    target: rectangle,
-    x: 50,
-    y: 50,
-    scaleX: 2,
-    time: 2000
-  })
-  .move([{
-    target: rectangle,
-    rotate: 2 * Math.PI,
-    originX: 0,
-    originY: 0,
-    alpha: 0,
-    time: 2000
-  },
-  {
-    target: rectangle2,
-    scaleX: 0.5,
-    fillStyle: '#00f0f0',
-    scaleY: 0.5
-  }
-  ])
-  .move({
-    target: rectangle,
-    x: 20,
-    y: 50,
-    scaleX: 0.5,
-    fillStyle: '#f0ff00',
-    alpha: 1,
-    time: 2000
-  })
-  .wait(1000)
-  .move({
-    target: rectangle,
-    fillStyle: '#f00f30',
-    x: 0,
-    y: 0
-  })
-  .wait(1000)
-  .remove([rectangle2, rectangle])
-  .add(ellipse)
-  .move({
-    target: ellipse,
-    rotate: Math.PI,
-    fillStyle: '#00ff00',
-    endAngle: 2* Math.PI,
-    time: 1000
-  })
-  .add(balls)
-  .move(new Dynamic(() => [[balls.map(v => {
-    return {
-      target: v,
-      ...v,
-      x: rand(300),
-      y: rand(100),
-      time: 1000 + rand(1000)
-    }
-  })]])) 
-
-
-
-// const rectangle3 = new Rectangle({
-//   originX: 0.5,
-//   originY: 0.5,
-//   x: 120,
-//   y: 20,
-//   fillStyle: '#194ff3',
-//   width: 30,
-//   height: 60
-// })
-
-
-// const rectangle4 = new Rectangle({
-//   rotate: Math.PI / 4,
-//   x: 150,
-//   y: 0,
-//   width: 30,
-//   height: 30
-// })
-
-// const _2 = new Child({
-//   controller,
-//   // auto: true,
-//   // loop:3,
-//   reverse:true,
-//   infinity: true
-// })
-//    .add(rectangle4)
-//   .add(rectangle3)
-//   .move({
-//     target: rectangle3,
-//     x: 80,
-//     y: 20,
-//     scaleX: 1.5,
-//     time: 1000
-//   })
-//   .move([{
-//     target: rectangle3,
-//     rotate: 2 * Math.PI,
-//     originX: 0,
-//     originY: 0,
-//     time: 1000
-//   },
-//   {
-//     target: rectangle4,
-//     scaleX: 1,
-//     fillStyle: '#00f0f0',
-//     scaleY: 0.5,
-//     time: 1000
-//   }
-//   ])
-//   .move({
-//     target: rectangle3,
-//     x: 120,
-//     y: 50,
-//     scaleX: 0.5,
-//     fillStyle: '#f0ff0f',
-//     time: 1000
-//   })
-//   .move({
-//     target: rectangle3,
-//     fillStyle: '#ff0030',
-//     x: 90,
-//     y: 0
-//   })
-// _._start()
-// setTimeout(() => {
-//   // _._start()
-// }, 2000)
-
-
-// const rec1 = new Rectangle({
-//   x: 200,
-//   y: 120,
-//   height: 20,
-//   width: 30,
-//   originX: 0.5,
-//   originY: -2,
-// })
-
-// const rec2 = new Rectangle({
-//   x: 100,
-//   y: 100,
-//   height: 20,
-//   width: 30,
-//   originX: 0.5,
-//   originY: -2,
-// })
-
-// const eli1 = new Ellipse({
-//   originX: 0.5,
-//   originY: -4,
-//   x: 170,
-//   y: 120,
-//   radiusX: 10,
-//   radiusY: 10,
-//   rotation: 0,
-//   startAngle: 0,
-//   endAngle:  2*Math.PI,
-//   anticlockwise: false
-// })
-
-// const eli2 = new Ellipse({
-//   originX: 0.5,
-//   originY: -4,
-//   x: 170,
-//   y: 100,
-//   radiusX: 5,
-//   radiusY: 5,
-//   rotation: 0,
-//   startAngle: 0,
-//   endAngle:  2*Math.PI,
-//   anticlockwise: false
-// })
-
-// const eli3 = new Ellipse({
-//   originX: 0.5,
-//   originY: -12,
-//   x: 170,
-//   y: 140,
-//   radiusX: 5,
-//   radiusY: 5,
-//   rotation: 0,
-//   startAngle: 0,
-//   endAngle:  2*Math.PI,
-//   anticlockwise: false
-// })
-
-// new Child({
-//   controller,
-//   auto: true,
-//   infinity: true
-// })
-// .move([{
-//   target: eli2,
-//   rotate: 6 *Math.PI,
-//   time: 8000
-// },{
-//   target: eli1,
-//   rotate: -4 *Math.PI,
-//   time: 8000
-// }, {
-//   target: eli3,
-//   rotate: 2 * Math.PI,
-//   time: 8000
-// }])
+// c._1._start()
+// c._2._start()
+// c._3._start()
+// c._4._start()
+// c._5._start()
+// c._6._start()
+for(const x of c._7) {
+  x._start()
+}

@@ -20,6 +20,7 @@ const m = [addHooks, log]
 export default class MyCanvas {
   constructor(options = {}) {
     options = {
+      count: 1,
       usedElements: [],
       isReversing: false,
       history: [],
@@ -73,7 +74,7 @@ function diff (options) {
   if (!target) {
     throw new Error('没有操作对象')
   }
-  if (!this._hadExisted(target)) {
+  if (!this._hadInContainer(target)) {
     this._add(target)
   }
   // 如果逻辑相反
@@ -109,7 +110,6 @@ function diff (options) {
       }
     }
   }
-  
   diffs.init = {
     ...start
   }
@@ -134,7 +134,6 @@ function run (options ) {
         if (!start) {
           start = timestamp
         }
-        // flag && console.log('刷新')
         const elapsed = timestamp - start;
         for (const currentOptions of cache) {
           if (currentOptions.endRender) {
@@ -172,14 +171,6 @@ function run (options ) {
     }
   })))
   
-}
-
-
-function _hadExisted (child, children) {
-  if (!children) {
-    children = this.children
-  }
-  return children.some(v => Array.isArray(v) ? _hadExisted(child, v) : v.id === child.id)
 }
 
 
@@ -221,7 +212,7 @@ async function remove (child) {
     return await Promise.all(child.map(v => remove.call(this, v)))
   }
 
-  if (this._hadExisted(child)) {
+  if (this._hadInContainer(child)) {
     child.remove()
   }
   this._render()
@@ -234,21 +225,19 @@ async function add (child) {
   }
 
   if (Array.isArray(child)) {
-    return await Promise.all(child.map(v => this._add(v)))
+    return Promise.all(child.map(v => this._add(v)))
   }
 
   
   const { children, ctx, usedElements } = this
-  if (!this._hadExisted(child)) {
+  if (!this._hadInContainer(child)) {  
     usedElements.push(child)
     children.push(child)
-    child.animations.value = this
+    child.container.value = children
     child.draw(ctx)
     if (child instanceof Group) {
       for (const c of child.children) {
-           c.isInGroup.value = true
-           c.animations.value = this
-           c.parent = child   
+          c._mountedInGroup(child)  
       }
      
     }
@@ -260,34 +249,40 @@ function getReverseFn (flag, fnName) {
   return flag ? needReverseFn.includes(fnName) ? reverseFnStore[fnName] : fnName : fnName
 }
 
-function reset (e) {
+function reset (e, flag =false) {
   if (Array.isArray(e)) {
-    return e.map(v => reset(v))
+    return e.map(v => reset(v,flag))
   } 
-  if (e instanceof Group) {
-    reset(e.children)
+  !flag && e.reset(e.initStatus)
+  e._unMounted(true)
+  if (e instanceof Group) {  
+    reset(e.usedElements,flag)
+
+    for (const c of e.children) {
+      c._mountedInGroup(e) 
+    }
   }
-  e.reset(e.initStatus)
- 
+  
 }
 
 async function _reStart () {
+  this.count ++
   this.children.splice(0, this.children.length)
 
   let FNchain = await Promise.all(this.history)
   this.promise = Promise.resolve('init instance')
   this.history.splice(0, this.history.length)
+ 
+
   if (this.reverse) {
     this.isReversing = !this.isReversing
     FNchain = FNchain.reverse()
   }
-  this.usedElements.forEach(e => {
-    if (!this.isReversing) {
-      reset(e)
-    }
+
+   this.usedElements.forEach(e => {
+    reset(e, this.isReversing)
   })
-
-
+  
   this.usedElements.splice(0, this.usedElements.length)
   FNchain.reduce((p, { fnName, arguments: args }) => {
     return p[getReverseFn(this.reverse, fnName)](...args)
@@ -305,9 +300,13 @@ async function _end () {
   }
 }
 
+function _hadInContainer (child) { // array可能会改成map
+   return Array.isArray(child.container.value)
+}
+
+MyCanvas.prototype._hadInContainer = _hadInContainer
 MyCanvas.prototype._end = _end
 MyCanvas.prototype._reStart = _reStart
-MyCanvas.prototype._hadExisted = _hadExisted
 MyCanvas.prototype._run = run
 MyCanvas.prototype._draw = draw
 MyCanvas.prototype.draw = draw

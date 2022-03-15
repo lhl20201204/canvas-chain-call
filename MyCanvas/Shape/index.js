@@ -21,7 +21,7 @@ export default class Shape {
     useMiddleWare(this, m)
 
     Object.defineProperty(this, "initStatus", {
-      value: { ...this, id: index },
+      value: { ...this },
       enumerable: false
     })
 
@@ -43,13 +43,14 @@ export default class Shape {
       enumerable: false
     })
 
-    Object.defineProperty(this, "animations", {
+
+    Object.defineProperty(this, "container", {
       value: {
         value: null
       },
       enumerable: false
     })
-
+    
   }
 
   reset (oldStaus) {
@@ -63,30 +64,34 @@ export default class Shape {
   }
 }
 
-function remove (parent = this.animations.value.children) {
+function remove (parent = this.container.value) {
     const len = parent.length
     for(let i =0;i<len;i ++) {
       if(!parent[i]) {
         break;
       }
-      if (Array.isArray(parent[i]) && remove.call(this, parent[i] )) {
-        return true
-      }
-
       if (parent[i].id === this.id) {
-        this.isInGroup.value = false
-        this.parent = null
-        this.animations.value = null
+        this._unMounted()
         parent.splice(i ,1)
         return true
       }
-
-      if ((parent[i].type === 'Group') && remove.call(this, parent[i].children) ) {
-          return true
-      }
     }
-    return false
+    throw new Error('删除失败')
+}
+
+function _mountedInGroup(group) {
+  this.isInGroup.value = true
+  this.parent = group
+  this.container.value = group.children
+}
+
+function _unMounted() {
+  this.isInGroup.value = false
+  this.parent = null
+  this.container.value = null
 }
 
 
+Shape.prototype._unMounted = _unMounted
+Shape.prototype._mountedInGroup = _mountedInGroup
 Shape.prototype.remove = remove

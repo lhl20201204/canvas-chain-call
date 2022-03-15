@@ -1,6 +1,5 @@
 import Options from "../Options"
 import Dynamic from "../Dynamic"
-import Group from "../Shape/Group"
 
 const needHandles = ['move']
 const unNeedGetresult = ['removeDynamic']

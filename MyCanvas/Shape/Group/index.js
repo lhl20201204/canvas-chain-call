@@ -2,15 +2,25 @@
 import Shape from "../index";
 export default class Group extends Shape {
     constructor(options ={}) {
+        options.type = 'Group' // 在shape/index的remove判断类型因为循环引用时未初始化，无法通过instanceof 判断，故多加这个type
         super({
-          type:'Group', // 在shape/index的remove判断类型因为循环引用时未初始化，无法通过instanceof 判断，故多加这个type
-          children: [],
           ...options
         })
+
+        Object.defineProperty(this, "children", {
+            value: [],
+            enumerable: false
+          })
+
+        Object.defineProperty(this, "usedElements", {
+            value: [],
+            enumerable: false
+        })
+
       }
 
    draw(ctx) {
-       const { children ,alpha, fillStyle, strokeStyle } = this
+       const { children ,alpha, fillStyle, strokeStyle } = this 
        for(const child of children) {
            child.alpha = alpha
            child.fillStyle =fillStyle
@@ -22,29 +32,21 @@ export default class Group extends Shape {
 }
 
 
-function _hadIn(target, parent= this.children ) {
-   for( const x of parent) { 
-       if (x.id === target.id || ((x instanceof Group) && _hadIn(target, x.children))) {
-           return true
-       }
-   }
-   return false
+function _hadIn(target ) { // array可能会改成map
+   return  Array.isArray(target.container.value)
 }
 
 function add ( child) {
     if(Array.isArray(child)) {
         return child.map(v => add.call(this, v))
     }
-    const { children } = this
-
+    const { children, usedElements } = this
     if (!this._hadIn(child)) {
-        child.isInGroup.value = true
-        child.animations.value = this.animations.value
-        child.parent = this
+        child._mountedInGroup(this)
         children.push(child)
+        usedElements.push(child)
     }
 }
-
 
 Group.prototype._hadIn =_hadIn
 Group.prototype.add = add
