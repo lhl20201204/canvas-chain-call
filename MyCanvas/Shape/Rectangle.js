@@ -4,8 +4,8 @@ import Shape from "./index";
 export default class Rectangle extends Shape {
   constructor(options ={}) {
     super({
-      type:'Rectangle',
-      ...options
+      ...options,
+      type:'Rectangle'
     })
   }
 

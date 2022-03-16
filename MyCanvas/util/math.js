@@ -5,10 +5,10 @@ export  function bezierCurve (p0, p1, p2, t) {
 
 export function getTotalRotate( cur) {
      let ret = cur.rotate 
-     let t = cur.parent
+     let t = cur.parent.value
      while(t) {
          ret += t.rotate
-         t = t.parent
+         t = t.parent.value
      }
      return ret
 }
@@ -18,7 +18,7 @@ function getTotalScale( cur, attr) {
     let t = cur
     while(t) {
         ret *= t[attr]
-        t = t.parent
+        t = t.parent.value
     }
     return ret
 }
@@ -40,7 +40,7 @@ export function getTotalAttr (cur) {
         retScaleX *= t.scaleX
         retScaleY *= t.scaleY
         retRotate += t.rotate
-        t = t.parent
+        t = t.parent.value
     }
     return {
         scaleX: retScaleX,
@@ -55,7 +55,7 @@ export function getTotalXY (cur) {
     let retY = 0
     let  t = cur
     while(t) {
-       let { scaleX, scaleY, rotate } = getTotalAttr(t.parent)
+       let { scaleX, scaleY, rotate } = getTotalAttr(t.parent.value)
        let x = t.x * scaleX
        let y = t.y * scaleY  
 
@@ -63,7 +63,7 @@ export function getTotalXY (cur) {
        let cosV = Math.cos(rotate)
        retX += (x * cosV - y * sinV)
        retY += (y * cosV + x * sinV)
-       t = t.parent                                                                                                                                                                                                                                                                                                              
+       t = t.parent.value                                                                                                                                                                                                                                                                                                             
     }
    return  {
        x: retX,

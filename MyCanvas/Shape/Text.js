@@ -6,8 +6,8 @@ export default class Text extends Shape {
         super({
           textBaseline: 'middle',
           fontType: 'serif',
+          ...options,
           type:'Text',
-          ...options
         })
       }
 

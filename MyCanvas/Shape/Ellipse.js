@@ -4,8 +4,8 @@ import { getTotalXY } from "../util/math";
 export default class Ellipse extends Shape {
     constructor(options ={}) {
         super({
-          type:'Ellipse',
-          ...options
+          ...options,
+          type:'Ellipse'
         })
       }
 

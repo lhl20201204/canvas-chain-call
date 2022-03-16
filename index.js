@@ -6,7 +6,9 @@ import Dynamic from "./MyCanvas/Dynamic";
 import Text from "./MyCanvas/Shape/Text";
 import Texture from "./MyCanvas/Shape/Texture";
 import Group from "./MyCanvas/Shape/Group";
+import Lines from "./MyCanvas/Shape/Lines";
 class Child extends MyCanvas {
+  // 这里你可以添加自己的一些方法，_开头不经过中间件
 }
 const canvas = document.getElementById('canvas')
 function rand (x) {
@@ -14,7 +16,7 @@ function rand (x) {
 }
 const controller =  new Controller({
    el: canvas,
-   longFail: true // 长尾特效是否开启s
+  //  longFail: true // 长尾特效是否开启s
 })
 
 let c = {
@@ -24,7 +26,8 @@ let c = {
   _4:null,
   _5: null,
   _6: null,
-  _7: []
+  _7: [],
+  _8: null
 }
 
 
@@ -115,11 +118,11 @@ let c = {
     reverse: true,
     // loop: 3
   })
-  //  .add(rec1)
-  //  .move({
-  //   target: rec1,
-  //   rotate: Math.PI,
-  // })
+   .add(rec1)
+   .move({
+    target: rec1,
+    rotate: Math.PI,
+  })
   .add(group)
   // .call(() => {
   //   // console.log({...rec2})
@@ -136,6 +139,8 @@ let c = {
     {
       target: rec3,
       rotate: Math.PI / 2,
+      scaleX:1 ,
+      scaleY:1,
       time: 3000
     },
   ]
@@ -593,12 +598,157 @@ for (let i= 0; i < 10;i ++) {
   }
 })(c);
 
+;((c) => {
+  const group = new Group({
+    scaleX: 0.2,
+    scaleY: 0.3,
+  })
+  const line = new Lines({
+    sx: 100,
+    sy: 0,
+    points: [ 
+      [41,181],
+      [195,69],
+      [5,69],
+      [159,181],
+
+      // { key: 'quadraticCurveTo', value: [25, 25, 25, 62.5] },
+      // { key: 'quadraticCurveTo', value: [25, 100, 50, 100] },
+      // { key: 'quadraticCurveTo', value: [50, 120, 30, 125] },
+      // { key: 'quadraticCurveTo', value: [60, 120, 65, 100] },
+      // { key: 'quadraticCurveTo', value: [125, 100, 125, 62.5] },
+      // { key: 'quadraticCurveTo', value: [125, 25, 75, 25] },
+    ],
+    isStorke: true
+  })
+  group.add(line)
+  c._8 = new MyCanvas({
+    controller,
+  })
+  .add(group)
+  .move({
+    target: group,
+    x: 106,
+    y: 20
+  })
+})(c);
+
+
+;((c) => {
+  let count = 0
+  let lastRotate = 0
+  let curLine = {}
+  let arr = [
+    [100,0],
+    [41,181],
+    [195,69],
+    [5,69],
+    [159,181],
+]
+
+const line = new Dynamic(()=> {
+  return new Lines({
+    sx: 100,
+    sy: 0,
+    points: arr.slice(1, count + 1),
+    noClosePath: true,
+    isStorke: true
+  })
+})
+
+
+const group = new Dynamic(()=> {
+  const group1 = new Group({
+    scaleX: 0.2,
+    scaleY: 0.3,
+    rotate: lastRotate,
+    x: 100,
+    y: 30
+  })
+
+  line.getResult()
+  group1.add(line.cache)
+  console.log('renew')
+  // console.log(group.cache, group1.rotate)
+  return group1
+})
+const len = 5
+  
+  c._9 = new MyCanvas({
+    controller,
+    infinity: true,
+    reverseInterval: len,
+    reverse: true,
+    loop: 2 * len + 1
+  })
+  // .call(() => {
+  //   curLine = line.resultStack[line.resultStack.length-1]
+  //   if(c._9.isReversing) {
+  //       line.resultStack.pop() 
+
+  //       line.cache._reset({...curLine})
+  //       console.log(line.cache.points.length)
+  //   }
+  // })
+  .add(group)
+  .move(
+    new Dynamic(()=>  [
+      //  {
+      //  target: group.cache,
+      //  rotate: (group.cache.rotate + Math.PI / len) 
+      //  },
+       {
+       target: line.cache,
+       points: arr.slice(1, count + 2),
+       time: 1000,
+       selfChange: function (key, ratio) { 
+        //  line.cache._reset({...curLine})
+          const t = line.cache
+          const next = (count+1) % len
+          const dx = arr[next][0] - arr[count][0]
+          const dy = arr[next][1] - arr[count][1]
+          // console.log(line.cache.points.length)
+          // console.log( t.id)
+          if(t[key].length > count+1) {
+            t[key].splice(count+1, t[key].length - count+1)
+          }
+           if (!c._9.isReversing) {
+            line.cache[key][count] = [arr[count][0] + ratio* dx , arr[count][1] + ratio*dy]
+           }else {
+            line.cache[key][count] = [arr[next][0] - ratio* dx , arr[next][1] - ratio*dy]
+           }
+         } 
+       // rotate: 2 * Math.PI
+     }
+  ])
+   
+  )
+  .call(()=> {
+    if(!c._9.isReversing) {
+       count = (count+1) % len
+    } 
+    else {
+      if (count === 0)
+      {
+        count = len
+      }
+      count = (count-1) % len
+
+    }
+    lastRotate = group.cache.rotate
+  })
+
+
+})(c);
+
 // c._1._start()
 // c._2._start()
 // c._3._start()
 // c._4._start()
 // c._5._start()
 // c._6._start()
-for(const x of c._7) {
-  x._start()
-}
+// for(const x of c._7) {
+//   x._start()
+// }
+// c._8._start()
+c._9._start()

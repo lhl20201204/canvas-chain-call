@@ -25,3 +25,31 @@ export function throttle(fn, delay) {
       }, delay)
   }
 }
+
+
+const canSkip = (t) => ((t instanceof Object) && t.type === 'group') || (typeof t === 'function')
+
+export function copy(t) {
+
+  if (Array.isArray(t)) {
+    const ret = []
+    for(const x of t) {
+      if (canSkip(x)) {
+        continue
+      }
+      ret.push(copy(x))
+    }
+    return ret
+  } 
+  else if (t instanceof Object) {
+    const ret = {}
+   for (const attr in t) {
+     if (canSkip(t[attr])) {
+       continue
+     }
+      ret[attr] = copy(t[attr])
+   }
+  return ret
+  }
+  return t
+}

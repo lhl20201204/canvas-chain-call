@@ -2,7 +2,7 @@ let index = 0
 import transform from "../middleware/transform";
 import useMiddleWare from "../middleware/useMiddleWare";
 import { extendOptions } from '../util/extend'
-
+import { copy } from '../util/index'
 const m = [transform]
 
 export default class Shape {
@@ -20,8 +20,8 @@ export default class Shape {
     extendOptions(this, options)
     useMiddleWare(this, m)
 
-    Object.defineProperty(this, "initStatus", {
-      value: { ...this },
+    Object.defineProperty(this, "firstStatus", {
+      value: copy(this),
       enumerable: false
     })
 
@@ -38,6 +38,14 @@ export default class Shape {
       enumerable: false
     })
 
+    Object.defineProperty(this, 'parent', {
+      value: {
+        value: null
+      },
+      enumerable: false
+    })
+
+
     Object.defineProperty(this, "id", {
       value: index++,
       enumerable: false
@@ -52,17 +60,17 @@ export default class Shape {
     })
     
   }
+}
 
-  reset (oldStaus) {
+function _reset (oldStatus) {
     for (const a in this) {
-      if (!Reflect.has(oldStaus, a)) {
+      if (!Reflect.has(oldStatus, a)) {
         Reflect.deleteProperty(this, a)
       } else {
-        this[a] = oldStaus[a]
+        this[a] = copy(oldStatus[a])
       }
     }
   }
-}
 
 function remove (parent = this.container.value) {
     const len = parent.length
@@ -81,17 +89,17 @@ function remove (parent = this.container.value) {
 
 function _mountedInGroup(group) {
   this.isInGroup.value = true
-  this.parent = group
+  this.parent.value = group
   this.container.value = group.children
 }
 
 function _unMounted() {
   this.isInGroup.value = false
-  this.parent = null
+  this.parent.value = null
   this.container.value = null
 }
 
-
+Shape.prototype._reset = _reset
 Shape.prototype._unMounted = _unMounted
 Shape.prototype._mountedInGroup = _mountedInGroup
 Shape.prototype.remove = remove

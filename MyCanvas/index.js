@@ -17,19 +17,23 @@ const reverseFnStore = {
   'remove': 'add'
 }
 const m = [addHooks, log]
+
+const selfHandle = (t) => Array.isArray(t) || (t instanceof Object)
 export default class MyCanvas {
   constructor(options = {}) {
     options = {
-      count: 1,
-      usedElements: [],
-      isReversing: false,
-      history: [],
+      reverseInterval: 1,
       promise: new Promise((resolve) => {
         this._start = resolve
         options.auto && resolve()
       }),
       children: [],
-      ...options
+      ...options ,
+      count: 1,
+      usedElements: [],
+      isReversing: false,
+      history: [],
+      totalHistory: [],
     }
     const {
       controller
@@ -64,6 +68,16 @@ async function call (fn) {
   }
 }
 
+function checkAddInAnimation(target) {
+   let t = target
+   while(t && this._hadInContainer(t)) {
+    t = t.parent.value
+   }
+   if (t && !this._hadInContainer(t)) {
+     this._add(t)
+   }
+}
+
 function diff (options) {
   if (Array.isArray(options)) {
     return options.time = Math.max(...options.map(e => diff.call(this, e)))
@@ -74,15 +88,13 @@ function diff (options) {
   if (!target) {
     throw new Error('没有操作对象')
   }
-  if (!this._hadInContainer(target)) {
-    this._add(target)
-  }
+  checkAddInAnimation.call(this, target)
   // 如果逻辑相反
   let start = target
   let end = rest
   if (this.isReversing) {
     start = endStatus
-    target.reset(endStatus)
+    target._reset(endStatus)
     end = initStatus
   }
 
@@ -91,6 +103,9 @@ function diff (options) {
     values: {}
   }
   for (const attr in end) {
+    if ((typeof end[attr] === 'function') || attr === 'diffs') {
+      continue
+    }
     if (!Reflect.has(start, attr)) {
       start[attr] = 0
     }
@@ -98,6 +113,8 @@ function diff (options) {
     if (style.includes(attr)) {
       diff = toInt(end[attr]) - toInt(start[attr])
       start[attr] = colorHex(start[attr])
+    }else if(selfHandle(end[attr])) {
+      diff = true
     } else {
       diff = end[attr] - start[attr]
     }
@@ -139,7 +156,7 @@ function run (options ) {
           if (currentOptions.endRender) {
             continue
           }
-        const { diffs, target , time, curve } = currentOptions
+        const { diffs, target , time, curve, selfChange } = currentOptions
         const { init, values, keys  } = diffs
         const ratio = Math.min(elapsed / time, 1)
         if (ratio === 1) {
@@ -148,6 +165,8 @@ function run (options ) {
         for (const key of keys) {
           if (style.includes(key)) {
             target[key] = colourBlend(init[key], values[key], ratio)
+          }  else if (selfHandle(target[key])) {
+            selfChange(key, ratio)
           } else {
             if (curve && curve[key]) {
               target[key] = bezierCurve(init[key], curve[key], init[key] + values[key], ratio)
@@ -204,14 +223,14 @@ async function removeDynamic(x) {
 }
 
 async function remove (child) {
-  if ( child instanceof Dynamic) {
+
+  if ( child instanceof Dynamic) { 
     child = child.cache
-    // console.log('移除', child.id, Reflect.ownKeys(child), [...this.children])
+
   }
   if (Array.isArray(child)) {
     return await Promise.all(child.map(v => remove.call(this, v)))
   }
-
   if (this._hadInContainer(child)) {
     child.remove()
   }
@@ -223,12 +242,11 @@ async function add (child) {
   if ( child instanceof Dynamic) {
     child = child.cache
   }
-
+  
   if (Array.isArray(child)) {
     return Promise.all(child.map(v => this._add(v)))
   }
 
-  
   const { children, ctx, usedElements } = this
   if (!this._hadInContainer(child)) {  
     usedElements.push(child)
@@ -253,8 +271,8 @@ function reset (e, flag =false) {
   if (Array.isArray(e)) {
     return e.map(v => reset(v,flag))
   } 
-  !flag && e.reset(e.initStatus)
-  e._unMounted(true)
+  !flag && e._reset(e.firstStatus)
+  e._unMounted()
   if (e instanceof Group) {  
     reset(e.usedElements,flag)
 
@@ -266,28 +284,42 @@ function reset (e, flag =false) {
 }
 
 async function _reStart () {
+  console.log('---------------')
   this.count ++
-  this.children.splice(0, this.children.length)
-
-  let FNchain = await Promise.all(this.history)
+   const getReverse = this.reverse && ((this.count -1 ) % this.reverseInterval === 0)
+ this.children.splice(0, this.children.length)
+  let curHistory = this.history
+  if (this.isReversing) {
+    curHistory = this.totalHistory.pop()
+  }
+  
+  let FNchain = await Promise.all(curHistory)
   this.promise = Promise.resolve('init instance')
-  this.history.splice(0, this.history.length)
- 
 
-  if (this.reverse) {
-    this.isReversing = !this.isReversing
-    FNchain = FNchain.reverse()
+  this.history.splice(0, this.history.length)
+
+  
+  if (getReverse) {
+      this.isReversing = !this.isReversing 
+      FNchain = FNchain.reverse()
+  
   }
 
    this.usedElements.forEach(e => {
     reset(e, this.isReversing)
   })
-  
   this.usedElements.splice(0, this.usedElements.length)
+  const reverseChain = []
   FNchain.reduce((p, { fnName, arguments: args }) => {
-    return p[getReverseFn(this.reverse, fnName)](...args)
+    reverseChain.push({
+      fnName: getReverseFn(getReverse, fnName),
+      arguments: args
+    })
+    return p[getReverseFn(getReverse, fnName)](...args)
   }, this)
-
+  if (this.isReversing) {
+    this.totalHistory.push([...reverseChain])
+  }
   this.controller.render()
 }
 

@@ -8,10 +8,17 @@ export default class Dynamic {
         this.id = id++
         this.fn = fn
         this.cache = null
+        this.resultStack = []
         
     }
 
     getResult(ret) {
-        this.cache = this.fn(ret)
+        const rets = this.fn(ret)
+        this.cache = rets
+        this.resultStack.push(rets)
+    }
+
+    popResult(ret) {
+       this.cache = this.resultStack.pop()
     }
 }

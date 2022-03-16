@@ -7,8 +7,8 @@ export default class Texture extends Shape {
         throw new Error('没有实例对象')
     }
     super({
-      type:'Image',
-      ...options
+      ...options,
+       type:'Texture',
     })
     
     const img = new Image();

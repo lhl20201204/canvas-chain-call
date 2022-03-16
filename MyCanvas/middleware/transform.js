@@ -5,6 +5,7 @@ export default function(_this) {
   return function (next) {
       return async function f(){
           const args = [...arguments]
+
           if (_this.type !== 'Group' && ['draw'].includes(f.fnName)) {
              const ctx = args[0]
              const { isInGroup, width, height,radius, radiusX, radiusY,  alpha, strokeStyle, fillStyle, originX, originY } = _this

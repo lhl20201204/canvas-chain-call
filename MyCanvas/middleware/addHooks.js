@@ -1,5 +1,7 @@
 import Options from "../Options"
 import Dynamic from "../Dynamic"
+import { copy } from "../util/index"
+import { merge} from "../util/extend"
 
 const needHandles = ['move']
 const unNeedGetresult = ['removeDynamic']
@@ -11,9 +13,16 @@ function addInitStatus (children) {
   }
   
   if (children instanceof Object && !Reflect.has(children, 'initStatus') && Reflect.has(children, 'target')) {
-    const { target, time = 1000, children:c , ...rest } = children
-    children.initStatus = { ...target }
-    children.endStatus = { ...target, ...rest }
+    const { target, time = 1000, selfChange, children:c , ...rest } = children
+    Object.defineProperty(children, "initStatus", {
+      value: {...copy(target)},
+      enumerable: false
+    })
+     
+    Object.defineProperty(children, "endStatus", {
+      value:  merge(copy(target), copy(rest)),
+      enumerable: false
+    })
   }
 }
 export default function(ret) {
@@ -25,7 +34,11 @@ export default function(ret) {
             if ( instance instanceof Dynamic && !unNeedGetresult.includes(f.fnName)) {
               if (!ret.isReversing) {
                 instance.getResult(ret)
-              }
+              } 
+              // else {
+              //   instance.popResult()
+              // } 
+
               t2 = instance.cache
             }
             if (needHandles.includes(f.fnName) && !t2.hasAddInitSatus) {
