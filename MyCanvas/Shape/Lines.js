@@ -10,7 +10,7 @@ export default class Lines extends Shape {
       }
 
    draw(ctx) {
-       const { points, isStorke, noClosePath} = this
+       const { points, isStorke, noClosePath=false} = this
        const { sx, sy } = this
        ctx.beginPath();
        ctx.moveTo(sx, sy);

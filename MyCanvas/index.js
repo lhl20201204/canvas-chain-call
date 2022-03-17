@@ -31,6 +31,7 @@ export default class MyCanvas {
       ...options ,
       count: 1,
       usedElements: [],
+      usedDynamics: [],
       isReversing: false,
       history: [],
       totalHistory: [],
@@ -88,12 +89,14 @@ function diff (options) {
   if (!target) {
     throw new Error('没有操作对象')
   }
+
   checkAddInAnimation.call(this, target)
   // 如果逻辑相反
   let start = target
   let end = rest
   if (this.isReversing) {
-    start = endStatus
+    start = endStatus 
+    // console.log('相反的时候充值参数')
     target._reset(endStatus)
     end = initStatus
   }
@@ -198,6 +201,7 @@ async function move (options) {
     throw new Error('没有参数')
   }
   if ( options instanceof Dynamic) {
+    this.usedDynamics.push(options)
     options = options.cache
   }
   diff.call(this, options)
@@ -225,6 +229,7 @@ async function removeDynamic(x) {
 async function remove (child) {
 
   if ( child instanceof Dynamic) { 
+    this.usedDynamics.push(child)
     child = child.cache
 
   }
@@ -240,6 +245,7 @@ async function remove (child) {
 async function add (child) {
   
   if ( child instanceof Dynamic) {
+    this.usedDynamics.push(child)
     child = child.cache
   }
   
@@ -284,9 +290,9 @@ function reset (e, flag =false) {
 }
 
 async function _reStart () {
-  console.log('---------------')
+  // console.log('--------') 
+ const getReverse = this.reverse && (this.count % this.reverseInterval === 0)
   this.count ++
-   const getReverse = this.reverse && ((this.count -1 ) % this.reverseInterval === 0)
  this.children.splice(0, this.children.length)
   let curHistory = this.history
   if (this.isReversing) {
@@ -295,7 +301,7 @@ async function _reStart () {
   
   let FNchain = await Promise.all(curHistory)
   this.promise = Promise.resolve('init instance')
-
+  
   this.history.splice(0, this.history.length)
 
   
@@ -304,11 +310,12 @@ async function _reStart () {
       FNchain = FNchain.reverse()
   
   }
-
+  
    this.usedElements.forEach(e => {
-    reset(e, this.isReversing)
+    reset(e, (this.reverse && !this.isReversing) || getReverse) // 这里很重要仔细看，是多次循环反转的核心
   })
   this.usedElements.splice(0, this.usedElements.length)
+ 
   const reverseChain = []
   FNchain.reduce((p, { fnName, arguments: args }) => {
     reverseChain.push({
@@ -318,8 +325,15 @@ async function _reStart () {
     return p[getReverseFn(getReverse, fnName)](...args)
   }, this)
   if (this.isReversing) {
+    for( const v of this.usedDynamics) { 
+      v.popResult()// 回退到上一个状态
+      // if (v.cache.type === 'Group') {
+        // console.log('回退',v.cache.id, v.cache.rotate)
+      // }
+    }
     this.totalHistory.push([...reverseChain])
   }
+  this.usedDynamics.splice(0, this.usedDynamics.length)
   this.controller.render()
 }
 

@@ -21,11 +21,16 @@ export default class Group extends Shape {
       }
 
    draw(ctx) {
-       const { children ,alpha, fillStyle, strokeStyle } = this 
+       const { children ,alpha, fillStyle, strokeStyle, isChildSelfAlpha =false, isChildSelfColor =false } = this 
        for(const child of children) {
+           if (!isChildSelfAlpha){
            child.alpha = alpha
-           child.fillStyle =fillStyle
+           }
+           if (!isChildSelfColor){
+           child.fillStyle = fillStyle
            child.strokeStyle = strokeStyle
+           }
+           
            child.draw(ctx)
        }       
    }

@@ -33,13 +33,13 @@ export default function(ret) {
             let t2 = args[0]
             if ( instance instanceof Dynamic && !unNeedGetresult.includes(f.fnName)) {
               if (!ret.isReversing) {
-                instance.getResult(ret)
-              } 
-              // else {
-              //   instance.popResult()
-              // } 
-
+                instance.pushResult(ret)
+                // console.log([...instance.resultStack])
+              }  
               t2 = instance.cache
+              // if (f.fnName === 'move') {
+              //     console.log(ret.isReversing,t2)
+              // }
             }
             if (needHandles.includes(f.fnName) && !t2.hasAddInitSatus) {
               addInitStatus(t2)

@@ -12,6 +12,7 @@ export default function(_this) {
              const total = isInGroup.value
              const { x, y } = total? getTotalXY(_this) : _this
              const { rotate, scaleX, scaleY } = total ? getTotalAttr(_this) : _this
+            //  console.log(_this.parent.value.id ,_this.parent.value.rotate)
              const centerX =(x + (width || radius|| radiusX || 0) * originX)
              const centerY =(y+ (height || radius|| radiusY|| 0) * originY)
              ctx.save();

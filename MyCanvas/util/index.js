@@ -1,3 +1,4 @@
+import Shape from "../Shape";
 
 export function flattern (array) {
   return array.reduce((p,v) => {
@@ -27,7 +28,7 @@ export function throttle(fn, delay) {
 }
 
 
-const canSkip = (t) => ((t instanceof Object) && t.type === 'group') || (typeof t === 'function')
+const canSkip = (t) => ( t instanceof Shape) || (t instanceof HTMLElement) || (typeof t === 'function')
 
 export function copy(t) {
 
@@ -45,6 +46,10 @@ export function copy(t) {
     const ret = {}
    for (const attr in t) {
      if (canSkip(t[attr])) {
+       continue
+     }
+     if (t[attr] instanceof Image) {
+       ret[attr] = t[attr]
        continue
      }
       ret[attr] = copy(t[attr])

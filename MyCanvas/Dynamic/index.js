@@ -12,13 +12,15 @@ export default class Dynamic {
         
     }
 
-    getResult(ret) {
+    pushResult(ret) {
+        // console.log('加入一个')
         const rets = this.fn(ret)
         this.cache = rets
         this.resultStack.push(rets)
     }
 
     popResult(ret) {
+    //    console.log('推出一个')
        this.cache = this.resultStack.pop()
     }
 }

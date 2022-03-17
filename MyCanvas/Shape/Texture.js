@@ -4,7 +4,7 @@ import { getTotalXY } from "../util/math";
 export default class Texture extends Shape {
   constructor(options ={}) {
     if (!options.src) {
-        throw new Error('没有实例对象')
+        throw new Error('没有图片路径')
     }
     super({
       ...options,

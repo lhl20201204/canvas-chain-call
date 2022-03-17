@@ -63,6 +63,7 @@ export default class Shape {
 }
 
 function _reset (oldStatus) {
+  // console.log(this.type, this.id, '恢复初态',{...this}, oldStatus)
     for (const a in this) {
       if (!Reflect.has(oldStatus, a)) {
         Reflect.deleteProperty(this, a)

@@ -7,6 +7,8 @@ import Text from "./MyCanvas/Shape/Text";
 import Texture from "./MyCanvas/Shape/Texture";
 import Group from "./MyCanvas/Shape/Group";
 import Lines from "./MyCanvas/Shape/Lines";
+import { copy } from "./MyCanvas/util";
+import { watch } from "./MyCanvas/util/watch";
 class Child extends MyCanvas {
   // 这里你可以添加自己的一些方法，_开头不经过中间件
 }
@@ -393,6 +395,7 @@ const eli1 = new Ellipse({
   originY: -4,
   x: 170,
   y: 120,
+  fillStyle: '#67ff88',
   radiusX: 10,
   radiusY: 10,
   rotation: 0,
@@ -406,6 +409,7 @@ const eli2 = new Ellipse({
   originY: -4,
   x: 170,
   y: 100,
+  fillStyle:'#139094',
   radiusX: 5,
   radiusY: 5,
   rotation: 0,
@@ -419,6 +423,7 @@ const eli3 = new Ellipse({
   originY: -12,
   x: 170,
   y: 140,
+  fillStyle: '#132494',
   radiusX: 5,
   radiusY: 5,
   rotation: 0,
@@ -624,6 +629,8 @@ for (let i= 0; i < 10;i ++) {
   group.add(line)
   c._8 = new MyCanvas({
     controller,
+    infinity: true,
+    reverse: true
   })
   .add(group)
   .move({
@@ -637,7 +644,6 @@ for (let i= 0; i < 10;i ++) {
 ;((c) => {
   let count = 0
   let lastRotate = 0
-  let curLine = {}
   let arr = [
     [100,0],
     [41,181],
@@ -650,6 +656,7 @@ const line = new Dynamic(()=> {
   return new Lines({
     sx: 100,
     sy: 0,
+    strokeStyle: '#ff0000',
     points: arr.slice(1, count + 1),
     noClosePath: true,
     isStorke: true
@@ -659,70 +666,56 @@ const line = new Dynamic(()=> {
 
 const group = new Dynamic(()=> {
   const group1 = new Group({
+    isChildSelfColor: true, // 用儿子自己的颜色
     scaleX: 0.2,
     scaleY: 0.3,
     rotate: lastRotate,
     x: 100,
-    y: 30
+    y: 70
   })
 
-  line.getResult()
+  line.pushResult()
   group1.add(line.cache)
-  console.log('renew')
-  // console.log(group.cache, group1.rotate)
   return group1
 })
+
+const moveOptions =  new Dynamic(()=>  [
+       {
+       target: group.cache,
+       rotate: (group.cache.rotate + 2 * Math.PI / len ) 
+       },
+       {
+       target: line.cache,
+       points: arr.slice(1, Math.min(len, count + 2)),
+       time: 1000,
+       selfChange: (()=> { // 闭包放一些 常量
+          const t = line.cache
+          const next = (count+1) % len 
+          const dx = arr[next][0] - arr[count][0]
+          const dy = arr[next][1] - arr[count][1]
+          return function ( key, ratio) { 
+
+           if (!c._9.isReversing) {
+            t[key][count] = [arr[count][0] + ratio* dx , arr[count][1] + ratio*dy]
+           }else {
+            t[key][count] = [arr[next][0] - ratio* dx , arr[next][1] - ratio*dy]
+           }
+         } 
+       })()
+     }
+  ])
 const len = 5
+
   
   c._9 = new MyCanvas({
     controller,
     infinity: true,
     reverseInterval: len,
     reverse: true,
-    loop: 2 * len + 1
+    loop: 2 * len + 2
   })
-  // .call(() => {
-  //   curLine = line.resultStack[line.resultStack.length-1]
-  //   if(c._9.isReversing) {
-  //       line.resultStack.pop() 
-
-  //       line.cache._reset({...curLine})
-  //       console.log(line.cache.points.length)
-  //   }
-  // })
   .add(group)
-  .move(
-    new Dynamic(()=>  [
-      //  {
-      //  target: group.cache,
-      //  rotate: (group.cache.rotate + Math.PI / len) 
-      //  },
-       {
-       target: line.cache,
-       points: arr.slice(1, count + 2),
-       time: 1000,
-       selfChange: function (key, ratio) { 
-        //  line.cache._reset({...curLine})
-          const t = line.cache
-          const next = (count+1) % len
-          const dx = arr[next][0] - arr[count][0]
-          const dy = arr[next][1] - arr[count][1]
-          // console.log(line.cache.points.length)
-          // console.log( t.id)
-          if(t[key].length > count+1) {
-            t[key].splice(count+1, t[key].length - count+1)
-          }
-           if (!c._9.isReversing) {
-            line.cache[key][count] = [arr[count][0] + ratio* dx , arr[count][1] + ratio*dy]
-           }else {
-            line.cache[key][count] = [arr[next][0] - ratio* dx , arr[next][1] - ratio*dy]
-           }
-         } 
-       // rotate: 2 * Math.PI
-     }
-  ])
-   
-  )
+  .move(moveOptions)
   .call(()=> {
     if(!c._9.isReversing) {
        count = (count+1) % len
@@ -733,11 +726,12 @@ const len = 5
         count = len
       }
       count = (count-1) % len
-
+      line.popResult() // 因为group加line时 有line.pushResult()， 这里popResult对称,回到上个状态,
+      // 不然就使用闭包，先保存操作对象
     }
     lastRotate = group.cache.rotate
+    
   })
-
 
 })(c);
 
