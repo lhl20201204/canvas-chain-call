@@ -16,12 +16,9 @@ export function throttle(fn, delay) {
   return function () {
       if (timer) {
         return;
-      }
-      var _this = this;
-      var args = arguments;
-      
-      timer = setTimeout(function () {
-          fn.apply(_this, args);
+      }      
+      timer = setTimeout(() => {
+          fn.apply(this, arguments);
           timer = null; 
       }, delay)
   }

@@ -12,15 +12,17 @@ export default class Text extends Shape {
       }
 
    draw(ctx) {
-      const {  content, fontSize, fontType, isStorke, textBaseline } = this
+      const {  content, fontSize, fontType, isStroke, textBaseline } = this
       const { x, y } = this.isInGroup.value ? getTotalXY(this) : this
       ctx.textBaseline = textBaseline
       ctx.font = `${fontSize}px ${fontType}`;
-      if (isStorke) {
+      ctx.beginPath()
+      if (isStroke) {
         ctx.strokeText(content, x, y);
       } else {
         ctx.fillText(content, x, y);
       }
+      ctx.closePath()
    }
    
    _caculate(ctx) {

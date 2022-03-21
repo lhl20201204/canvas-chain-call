@@ -10,20 +10,20 @@ export default class Lines extends Shape {
       }
 
    draw(ctx) {
-       const { points, isStorke, noClosePath=false} = this
+       const { points, isStroke, noClosePath=false} = this
        const { sx, sy } = this
        ctx.beginPath();
        ctx.moveTo(sx, sy);
        for(const p of points) {
         ctx[p.key || 'lineTo'](...(p.value|| p));
        }
-      !noClosePath && ctx.closePath();
-      if (isStorke) {
+     
+      if (isStroke) {
          ctx.stroke();
        }else {
         ctx.fill();
        }
-    
+     !noClosePath && ctx.closePath();
    }
 
 }

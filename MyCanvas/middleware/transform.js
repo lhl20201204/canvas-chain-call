@@ -3,7 +3,7 @@ import { getTotalAttr, getTotalXY } from "../util/math"
 // import Options from "../Options"
 export default function(_this) {
   return function (next) {
-      return async function f(){
+      return function f(){
           const args = [...arguments]
 
           if (_this.type !== 'Group' && ['draw'].includes(f.fnName)) {

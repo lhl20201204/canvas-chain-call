@@ -10,13 +10,16 @@ export default class Rectangle extends Shape {
   }
 
    draw (ctx) {
-       const { width, height, isStorke } = this
+       const { width, height, isStroke } = this
        const { x, y } = this.isInGroup.value ? getTotalXY(this) : this
-       if (isStorke) {
-            ctx.strokeRect(x, y, width, height);
-       }else { 
-           ctx.fillRect(x, y, width, height);
+       ctx.beginPath();
+       ctx.rect(x, y, width, height); //倾斜45°角
+       if (isStroke) {
+         ctx.stroke();
+       }else {
+        ctx.fill();
        }
+       ctx.closePath();
    }
 
 }

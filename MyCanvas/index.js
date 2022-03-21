@@ -10,7 +10,7 @@ import { bezierCurve } from "./util/math"
 import Group from "./Shape/Group"
 const defaultTime = 1000
 const style = ['fillStyle', 'strokeStyle']
-const maxSize = 100 // 一组为多少个刷新，可以设置 Number.MAX_VALUE ,运动的时候不分批刷新
+const maxSize = Number.MAX_VALUE // 一组为多少个刷新，可以设置 Number.MAX_VALUE ,运动的时候不分批刷新
 const needReverseFn = ['add', 'remove']
 const reverseFnStore = {
   'add': 'remove',
@@ -27,8 +27,8 @@ export default class MyCanvas {
         this._start = resolve
         options.auto && resolve()
       }),
+      ...options , 
       children: [],
-      ...options ,
       count: 1,
       usedElements: [],
       usedDynamics: [],
@@ -49,6 +49,7 @@ export default class MyCanvas {
     options.animations = controller.animations
     options._render = controller.render
     options.longFail = controller.longFail
+    options.track = controller.track
     extendOptions(this, options)
     useMiddleWare(this, m)
     controller.animations.push(this)
@@ -69,7 +70,7 @@ async function call (fn) {
   }
 }
 
-function checkAddInAnimation(target) {
+function ensureTargetbeAdded(target) {
    let t = target
    while(t && this._hadInContainer(t)) {
     t = t.parent.value
@@ -90,7 +91,7 @@ function diff (options) {
     throw new Error('没有操作对象')
   }
 
-  checkAddInAnimation.call(this, target)
+  ensureTargetbeAdded.call(this, target)
   // 如果逻辑相反
   let start = target
   let end = rest
@@ -327,9 +328,6 @@ async function _reStart () {
   if (this.isReversing) {
     for( const v of this.usedDynamics) { 
       v.popResult()// 回退到上一个状态
-      // if (v.cache.type === 'Group') {
-        // console.log('回退',v.cache.id, v.cache.rotate)
-      // }
     }
     this.totalHistory.push([...reverseChain])
   }
