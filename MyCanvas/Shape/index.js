@@ -65,33 +65,33 @@ export default class Shape {
       },
       enumerable: false
     })
-    
+
   }
 }
 
-function _reset (oldStatus) {
-    for (const a in this) {
-      if (!Reflect.has(oldStatus, a)) {
-        Reflect.deleteProperty(this, a)
-      } else {
-        this[a] = copy(oldStatus[a])
-      }
+function _reset(oldStatus) {
+  for (const a in this) {
+    if (!Reflect.has(oldStatus, a)) {
+      Reflect.deleteProperty(this, a)
+    } else {
+      this[a] = copy(oldStatus[a])
     }
   }
+}
 
-function remove (parent = this.container.value) {
-    const len = parent.length
-    for(let i =0;i<len;i ++) {
-      if(!parent[i]) {
-        break;
-      }
-      if (parent[i].id === this.id) {
-        this._unMounted()
-        parent.splice(i ,1)
-        return true
-      }
+function remove(parent = this.container.value) {
+  const len = parent.length
+  for (let i = 0; i < len; i++) {
+    if (!parent[i]) {
+      break;
     }
-    throw new Error('删除失败')
+    if (parent[i].id === this.id) {
+      this._unMounted()
+      parent.splice(i, 1)
+      return true
+    }
+  }
+  throw new Error('删除失败')
 }
 
 function _mountedInGroup(group) {

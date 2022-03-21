@@ -1,5 +1,5 @@
 
-export default function createGenInstanceFn (ret, fnName, next) {
+export default function createGenInstanceFn(ret, fnName, next) {
   return function () {
     const lastPromise = ret.promise // 链式调用核心
     const newPromise = new Promise((resolve) => {

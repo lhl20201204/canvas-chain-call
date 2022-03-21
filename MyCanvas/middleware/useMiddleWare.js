@@ -2,8 +2,8 @@ const excludeAttr = ['constructor']
 import Shape from "../Shape"
 import MyCanvas from "../index"
 
-export default function useMiddleWare (ret, m) {
-  function proxy (obj, fn = (x => x)) {
+export default function useMiddleWare(ret, m) {
+  function proxy(obj, fn = (x => x)) {
     const prototype = Reflect.getPrototypeOf(obj)
     const attrs = Reflect.ownKeys(prototype)
     const middlewares = m.map(v => v(ret))
@@ -21,7 +21,7 @@ export default function useMiddleWare (ret, m) {
         , originvalue)
 
       Object.defineProperty(ret, name, {
-        get () {
+        get() {
           return newvalue
         }
       })

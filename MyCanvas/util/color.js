@@ -1,4 +1,4 @@
-export function colorHex (that) {
+export function colorHex(that) {
   //十六进制颜色值的正则表达式
   var reg = /^#([0-9a-fA-f]{3}|[0-9a-fA-f]{6})$/;
   // 如果是rgb颜色表示
@@ -31,7 +31,7 @@ export function colorHex (that) {
   return that;
 };
 
-export function colorRgb (that) {
+export function colorRgb(that) {
   var sColor = that.toLowerCase();
   //十六进制颜色值的正则表达式
   var reg = /^#([0-9a-fA-f]{3}|[0-9a-fA-f]{6})$/;
@@ -54,11 +54,11 @@ export function colorRgb (that) {
   return sColor;
 };
 
-export function toInt (x) {
+export function toInt(x) {
   return parseInt(colorHex(x).slice(1), 16)
 }
 
-export function colourBlend (c1, c2, ratio) {
+export function colourBlend(c1, c2, ratio) {
   ratio = Math.max(Math.min(Number(ratio), 1), 0)
   let r1 = parseInt(c1.substring(1, 3), 16)
   let g1 = parseInt(c1.substring(3, 5), 16)

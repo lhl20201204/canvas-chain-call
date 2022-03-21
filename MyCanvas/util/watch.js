@@ -1,4 +1,4 @@
-export function watch(obj, attr, x =obj[attr]) {
+export function watch(obj, attr, x = obj[attr]) {
 
     Object.defineProperty(obj, attr, {
         get() {

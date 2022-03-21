@@ -27,7 +27,7 @@ export default class MyCanvas {
         this._start = resolve
         options.auto && resolve()
       }),
-      ...options , 
+      ...options,
       children: [],
       count: 1,
       usedElements: [],
@@ -56,7 +56,7 @@ export default class MyCanvas {
   }
 }
 
-async function wait (delay) {
+async function wait(delay) {
   await new Promise(resolve => {
     setTimeout(() => {
       resolve()
@@ -64,29 +64,30 @@ async function wait (delay) {
   })
 }
 
-async function call (fn) {
+async function call(fn) {
   if (typeof fn === 'function') {
     await fn(this)
   }
 }
 
 function ensureTargetbeAdded(target) {
-   let t = target
-   while(t && this._hadInContainer(t)) {
+  let t = target
+  while (t && this._hadInContainer(t)) {
     t = t.parent.value
-   }
-   if (t && !this._hadInContainer(t)) {
-     this._add(t)
-   }
+  }
+  if (t && !this._hadInContainer(t)) {
+    this._add(t)
+  }
 }
 
-function diff (options) {
+function diff(options) {
   if (Array.isArray(options)) {
     return options.time = Math.max(...options.map(e => diff.call(this, e)))
   }
-  
+
   options.time = options.time || defaultTime
-  const { target, time, endRender, initStatus, endStatus, ...rest } = options
+  options.selfChange = options.selfChange || (() => { })
+  const { target, time, endRender, selfChange, initStatus, endStatus, ...rest } = options
   if (!target) {
     throw new Error('没有操作对象')
   }
@@ -96,7 +97,7 @@ function diff (options) {
   let start = target
   let end = rest
   if (this.isReversing) {
-    start = endStatus 
+    start = endStatus
     // console.log('相反的时候充值参数')
     target._reset(endStatus)
     end = initStatus
@@ -117,7 +118,7 @@ function diff (options) {
     if (style.includes(attr)) {
       diff = toInt(end[attr]) - toInt(start[attr])
       start[attr] = colorHex(start[attr])
-    }else if(selfHandle(end[attr])) {
+    } else if (selfHandle(end[attr])) {
       diff = true
     } else {
       diff = end[attr] - start[attr]
@@ -139,19 +140,19 @@ function diff (options) {
 }
 
 
-function run (options ) {
+function run(options) {
   let start = null
   const caches = flattern([options])
   caches.forEach(c => c.endRender = false)
   const chunk = [] // 分批
-  while(caches.length > 0) {
-    chunk.push(caches.splice(0,maxSize))
+  while (caches.length > 0) {
+    chunk.push(caches.splice(0, maxSize))
   }
   const _this = this
-  return Promise.all(chunk.map(cache =>  new Promise((resolve, reject) => {
+  return Promise.all(chunk.map(cache => new Promise((resolve, reject) => {
     try {
-      const time = Math.max(...cache.map(v => v.time ))
-      function step (timestamp) {
+      const time = Math.max(...cache.map(v => v.time))
+      function step(timestamp) {
         if (!start) {
           start = timestamp
         }
@@ -160,28 +161,28 @@ function run (options ) {
           if (currentOptions.endRender) {
             continue
           }
-        const { diffs, target , time, curve, selfChange } = currentOptions
-        const { init, values, keys  } = diffs
-        const ratio = Math.min(elapsed / time, 1)
-        if (ratio === 1) {
-          currentOptions.endRender = true
-        }
-        for (const key of keys) {
-          if (style.includes(key)) {
-            target[key] = colourBlend(init[key], values[key], ratio)
-          }  else if (selfHandle(target[key])) {
-            selfChange(key, ratio)
-          } else {
-            if (curve && curve[key]) {
-              target[key] = bezierCurve(init[key], curve[key], init[key] + values[key], ratio)
-            }else {
-               target[key] = init[key] + ratio * values[key] // 这样写不用考虑正负值
+          const { diffs, target, time, curve, selfChange } = currentOptions
+          const { init, values, keys } = diffs
+          const ratio = Math.min(elapsed / time, 1)
+          if (ratio === 1) {
+            currentOptions.endRender = true
+          }
+          for (const key of keys) {
+            if (style.includes(key)) {
+              target[key] = colourBlend(init[key], values[key], ratio)
+            } else if (selfHandle(target[key])) {
+              selfChange(key, ratio)
+            } else {
+              if (curve && curve[key]) {
+                target[key] = bezierCurve(init[key], curve[key], init[key] + values[key], ratio)
+              } else {
+                target[key] = init[key] + ratio * values[key] // 这样写不用考虑正负值
+              }
             }
           }
-        } 
         }
-       
-       _this._render()
+
+        _this._render()
         if (elapsed < time) { // 在time后停止动画
           window.requestAnimationFrame(step);
         } else {
@@ -193,15 +194,15 @@ function run (options ) {
       reject(e)
     }
   })))
-  
+
 }
 
 
-async function move (options) {
+async function move(options) {
   if (!options) {
     throw new Error('没有参数')
   }
-  if ( options instanceof Dynamic) {
+  if (options instanceof Dynamic) {
     this.usedDynamics.push(options)
     options = options.cache
   }
@@ -209,27 +210,27 @@ async function move (options) {
   return this._run(options)
 }
 
-async function draw (parent, ctx) {
+async function draw(parent, ctx) {
   let index = 0
   const len = parent.length
-  while (index <len) {
+  while (index < len) {
     parent[index++].draw(ctx)
   }
 }
 
 async function removeDynamic(x) {
-   if (Array.isArray(x)) {
-     return Promise.all(x.map(v => removeDynamic.call(this, v)))
-   }
-   if (!(x instanceof Dynamic)) {
-     throw new Error('不是dynamic实例')
-   }
-   return remove.call(this,  x.cache )
+  if (Array.isArray(x)) {
+    return Promise.all(x.map(v => removeDynamic.call(this, v)))
+  }
+  if (!(x instanceof Dynamic)) {
+    throw new Error('不是dynamic实例')
+  }
+  return remove.call(this, x.cache)
 }
 
-async function remove (child) {
+async function remove(child) {
 
-  if ( child instanceof Dynamic) { 
+  if (child instanceof Dynamic) {
     this.usedDynamics.push(child)
     child = child.cache
 
@@ -243,80 +244,80 @@ async function remove (child) {
   this._render()
 }
 
-async function add (child) {
-  
-  if ( child instanceof Dynamic) {
+async function add(child) {
+
+  if (child instanceof Dynamic) {
     this.usedDynamics.push(child)
     child = child.cache
   }
-  
+
   if (Array.isArray(child)) {
     return Promise.all(child.map(v => this._add(v)))
   }
 
   const { children, ctx, usedElements } = this
-  if (!this._hadInContainer(child)) {  
+  if (!this._hadInContainer(child)) {
     usedElements.push(child)
     children.push(child)
     child.container.value = children
     child.draw(ctx)
     if (child instanceof Group) {
       for (const c of child.children) {
-          c._mountedInGroup(child)  
+        c._mountedInGroup(child)
       }
-     
+
     }
   }
 }
 
 
-function getReverseFn (flag, fnName) {
+function getReverseFn(flag, fnName) {
   return flag ? needReverseFn.includes(fnName) ? reverseFnStore[fnName] : fnName : fnName
 }
 
-function reset (e, flag =false) {
+function reset(e, flag = false) {
   if (Array.isArray(e)) {
-    return e.map(v => reset(v,flag))
-  } 
+    return e.map(v => reset(v, flag))
+  }
   !flag && e._reset(e.firstStatus)
   e._unMounted()
-  if (e instanceof Group) {  
-    reset(e.usedElements,flag)
+  if (e instanceof Group) {
+    reset(e.usedElements, flag)
 
     for (const c of e.children) {
-      c._mountedInGroup(e) 
+      c._mountedInGroup(e)
     }
   }
-  
+
 }
 
-async function _reStart () {
+async function _reStart() {
   // console.log('--------') 
- const getReverse = this.reverse && (this.count % this.reverseInterval === 0)
-  this.count ++
- this.children.splice(0, this.children.length)
+  const getReverse = this.reverse && (this.count % this.reverseInterval === 0)
+  this.count++
+  this.children.splice(0, this.children.length)
   let curHistory = this.history
   if (this.isReversing) {
     curHistory = this.totalHistory.pop()
   }
-  
+
   let FNchain = await Promise.all(curHistory)
   this.promise = Promise.resolve('init instance')
-  
+
   this.history.splice(0, this.history.length)
 
-  
+
   if (getReverse) {
-      this.isReversing = !this.isReversing 
-      FNchain = FNchain.reverse()
-  
+    this.isReversing = !this.isReversing
+    FNchain = FNchain.reverse()
+
   }
-  
-   this.usedElements.forEach(e => {
+
+  this.usedElements.forEach(e => {
     reset(e, (this.reverse && !this.isReversing) || getReverse) // 这里很重要仔细看，是多次循环反转的核心
   })
   this.usedElements.splice(0, this.usedElements.length)
- 
+
   const reverseChain = []
   FNchain.reduce((p, { fnName, arguments: args }) => {
     reverseChain.push({
@@ -326,7 +327,7 @@ async function _reStart () {
     return p[getReverseFn(getReverse, fnName)](...args)
   }, this)
   if (this.isReversing) {
-    for( const v of this.usedDynamics) { 
+    for (const v of this.usedDynamics) {
       v.popResult()// 回退到上一个状态
     }
     this.totalHistory.push([...reverseChain])
@@ -335,7 +336,7 @@ async function _reStart () {
   this.controller.render()
 }
 
-async function _end () {
+async function _end() {
   if (this.infinity) {
     this._reStart()
   } else if (this.loop > 1) {
@@ -344,8 +345,8 @@ async function _end () {
   }
 }
 
-function _hadInContainer (child) { // array可能会改成map
-   return Array.isArray(child.container.value)
+function _hadInContainer(child) { // array可能会改成map
+  return Array.isArray(child.container.value)
 }
 
 MyCanvas.prototype._hadInContainer = _hadInContainer

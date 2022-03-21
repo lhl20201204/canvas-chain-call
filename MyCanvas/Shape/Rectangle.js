@@ -2,24 +2,24 @@
 import { getTotalXY } from "../util/math";
 import Shape from "./index";
 export default class Rectangle extends Shape {
-  constructor(options ={}) {
+  constructor(options = {}) {
     super({
       ...options,
-      type:'Rectangle'
+      type: 'Rectangle'
     })
   }
 
-   draw (ctx) {
-       const { width, height, isStroke } = this
-       const { x, y } = this.isInGroup.value ? getTotalXY(this) : this
-       ctx.beginPath();
-       ctx.rect(x, y, width, height); //倾斜45°角
-       if (isStroke) {
-         ctx.stroke();
-       }else {
-        ctx.fill();
-       }
-       ctx.closePath();
-   }
+  draw(ctx) {
+    const { width, height, isStroke } = this
+    const { x, y } = this.isInGroup.value ? getTotalXY(this) : this
+    ctx.beginPath();
+    ctx.rect(x, y, width, height); //倾斜45°角
+    if (isStroke) {
+      ctx.stroke();
+    } else {
+      ctx.fill();
+    }
+    ctx.closePath();
+  }
 
 }
