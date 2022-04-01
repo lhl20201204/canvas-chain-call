@@ -13,7 +13,7 @@ export default class Rectangle extends Shape {
     const { width, height, isStroke } = this
     const { x, y } = this.isInGroup.value ? getTotalXY(this) : this
     ctx.beginPath();
-    ctx.rect(x, y, width, height); //倾斜45°角
+    ctx.rect(x, y, width, height);
     if (isStroke) {
       ctx.stroke();
     } else {

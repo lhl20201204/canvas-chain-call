@@ -17,8 +17,8 @@ function rand(x) {
 }
 const controller = new Controller({
   el: canvas,
-  track: 0.21, // 控制轨迹尾巴,越小轨迹越长越久
-  longFail: true // 长尾特效是否开启ss
+  track: 0.3, // 控制轨迹尾巴,越小轨迹越长越久
+  // longFail: true // 长尾特效是否开启ss
 })
 
 let c = {
@@ -856,14 +856,92 @@ let c = {
 
 })(c);
 
-c._1._start()
+;((c) => {
+  const width = 40
+  const height = 48
+  const ratio = controller.ratio // 因为全局放大了ratio所以需要乘以
+  const image = new Texture({
+    src: './testPoints.webp',
+    width,
+    height
+  }) 
+  const cache = []
+  const points = new Dynamic(() => {
+
+    return cache.map((q, i) =>{
+    const v = q[rand(16)]
+    return new Rectangle({
+    width: 1,
+    height: 1,
+    scaleX: 1,
+    scaleY: 1 ,
+    x: (i % (width)) ,
+    y: Math.floor(i / (width)),
+    fillStyle: `rgba(${v[0]},${v[1]},${v[2]},${v[3]/ 255})`
+   })
+
+  } 
+  )
+  })
+
+
+  c._10 = new Child({
+    controller,
+    infinity: true,
+    reverse: true
+  })
+  .call( async (a)=>{   
+    if(cache.length === 0) {
+    a._add(image) // 不是链式调用，用_add
+    await image.load
+    const source =  [...a.ctx.getImageData(image.x, image.y, width * ratio, height *ratio).data]
+    const temp = []
+    while(source.length) {
+      temp.push(source.splice(0, 4))
+    }
+    const rowNums = width * ratio
+       for(let j = 0; j < height; j ++) {
+         for(let i = 0; i < width ; i++) {
+         const points = []
+         for(let x = 0; x< ratio;x++) { // 将相邻的ratio* ratio 个点，压成一个点
+           for(let y =0; y< ratio;y++) {
+             points.push(temp[(ratio*j+y) * rowNums + ratio*i + x])
+           }
+         }
+         cache.push(points)
+      }
+    }
+    temp.splice(0, temp.length)
+    a._remove(image)
+   }
+  })
+  .add(points)
+  .wait(1000)
+  .move(new Dynamic(() => points.cache.map(v => ({
+    target: v,
+    x: v.x + 50,
+    y: v.y + 30,
+    curve: {
+      x: v.x + rand(150),
+      y: v.y + rand(150),
+    },
+    time: rand(2000) 
+  }))))
+  .wait(500)
+
+})(c)
+
+
+
+// c._1._start()
 // c._2._start()
 // c._3._start()
 // c._4._start()
 // c._5._start()
-c._6._start()
-for (const x of c._7) {
-  x._start()
-}
+// c._6._start()
+// for (const x of c._7) {
+//   x._start()
+// }
 // c._8._start()
 // c._9._start()
+c._10._start()

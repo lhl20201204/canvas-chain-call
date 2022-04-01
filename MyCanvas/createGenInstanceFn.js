@@ -1,7 +1,7 @@
 
 export default function createGenInstanceFn(ret, fnName, next) {
   return function () {
-    const lastPromise = ret.promise // 链式调用核心
+    let lastPromise = ret.promise // 链式调用核心
     const newPromise = new Promise((resolve) => {
       lastPromise.then((res) => {
         if (!next) {
@@ -12,6 +12,7 @@ export default function createGenInstanceFn(ret, fnName, next) {
         } else {
           (async () => {
             await next(...arguments)
+            lastPromise = null
             resolve({
               fnName,
               arguments
